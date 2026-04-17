@@ -17,11 +17,12 @@ I study how institutions claim legitimacy—and where those claims begin to brea
 </p>
 
 <nav>
-<button id="theme-toggle">
-  <svg id="toggle-icon" viewBox="0 0 24 24">
+<button id="theme-toggle" title="Toggle theme">
+  <svg id="toggle-icon" viewBox="0 0 24 24" width="14" height="14"
+    fill="none" stroke="currentColor" stroke-width="1.5"
+    stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
   </svg>
-  <span id="toggle-label">Dark mode</span>
 </button>
   <a href="about.html">About</a>
   <a href="projects.html">Work</a>
@@ -47,34 +48,31 @@ I study how institutions claim legitimacy—and where those claims begin to brea
 </div>
 <script>
 const toggle = document.getElementById("theme-toggle");
-const toggleLabel = document.getElementById("toggle-label");
 const toggleIcon = document.getElementById("toggle-icon");
 
 const icons = {
-  dark:  '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
-  light: '<path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 5a7 7 0 1 0 0 14A7 7 0 0 0 12 5z"/>',
-  auto:  '<path d="M12 3v1M12 20v1M4.22 4.22l.7.7M19.08 19.08l.7.7M1 12h1M22 12h-1M4.22 19.78l.7-.7M19.08 4.92l.7-.7M12 7a5 5 0 1 0 0 10A5 5 0 0 0 12 7z"/>'
+  dark:  'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
+  light: 'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 6a6 6 0 1 0 0 12A6 6 0 0 0 12 6z',
+  auto:  'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'
 };
 
 let state = "auto";
+
 toggle.addEventListener("click", () => {
   const body = document.body;
   if (state === "auto") {
     state = "dark";
     body.classList.add("dark");
     body.classList.remove("light");
-    toggleLabel.textContent = "Light mode";
   } else if (state === "dark") {
     state = "light";
     body.classList.add("light");
     body.classList.remove("dark");
-    toggleLabel.textContent = "Auto";
   } else {
     state = "auto";
     body.classList.remove("dark", "light");
-    toggleLabel.textContent = "Dark mode";
   }
-  toggleIcon.innerHTML = icons[state];
+  toggleIcon.innerHTML = `<path d="${icons[state]}"/>`;
 });
 </script>
 </body>
