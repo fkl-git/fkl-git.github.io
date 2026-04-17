@@ -25,9 +25,8 @@ body.dark {
   --border: #333;
 }
 
-/* System dark mode (only if no manual override) */
 @media (prefers-color-scheme: dark) {
-  body:not(.light) {
+  body:not(.light):not(.dark) {
     --bg: #0d0d0d;
     --text: #e5e5e5;
     --text-secondary: #cfcfcf;
