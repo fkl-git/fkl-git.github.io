@@ -30,9 +30,8 @@ h2 {
 
 p {
   font-size: 1.05rem;
-  line-height: 1.8;
-  color: #333;
-  margin-bottom: 1.5em;
+  line-height: 1.85;
+  max-width: 65ch;
 }
 
 nav {
@@ -85,6 +84,11 @@ a:hover {
   opacity: 0.6;
 }
 
+a:focus, button:focus {
+  outline: 2px solid #888;
+  outline-offset: 3px;
+}
+
 section:hover {
   transform: translateY(-1px);
   transition: transform 0.2s ease;
@@ -124,4 +128,22 @@ body.dark p {
 
 body.dark nav a {
   color: #aaa;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+button {
+  background: none;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #000;
 }
