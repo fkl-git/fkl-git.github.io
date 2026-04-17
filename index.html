@@ -5,6 +5,13 @@
   <link rel="stylesheet" href="style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+<script>
+const toggle = document.getElementById("theme-toggle");
+
+toggle.onclick = () => {
+  document.body.classList.toggle("dark");
+};
+</script>
 <body>
 
 <div class="container">
@@ -16,6 +23,7 @@ I study how institutions claim legitimacy—and where those claims begin to brea
 </p>
 
 <nav>
+  <button id="theme-toggle">Toggle Theme</button>
   <a href="about.html">About</a>
   <a href="projects.html">Work</a>
   <a href="writing.html">Writing</a>
