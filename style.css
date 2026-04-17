@@ -1,10 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap');
 
 body {
-  margin: 0;
   background: #fafafa;
   color: #111;
-  font-family: 'Inter', sans-serif;
+}
+
+body.dark {
+  background: #0d0d0d;
+  color: #e5e5e5;
+}
+
+body.dark p {
+  color: #cfcfcf;
+}
+
+body.dark nav a {
+  color: #aaa;
+}
+
+body.dark hr {
+  border-top: 1px solid #333;
 }
 
 .container {
@@ -95,10 +110,11 @@ section:hover {
 }
 
 @media (prefers-color-scheme: dark) {
-  body {
-    background-color: #0d0d0d;
+  body:not(.light) {
+    background: #0d0d0d;
     color: #e5e5e5;
   }
+}
 
   p {
     color: #cfcfcf;
@@ -117,19 +133,6 @@ section:hover {
   }
 }
 
-body.dark {
-  background-color: #0d0d0d;
-  color: #e5e5e5;
-}
-
-body.dark p {
-  color: #cfcfcf;
-}
-
-body.dark nav a {
-  color: #aaa;
-}
-
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
@@ -137,13 +140,15 @@ body.dark nav a {
 }
 
 button {
-  background: none;
-  border: 1px solid #ccc;
-  padding: 6px 10px;
-  font-size: 0.9rem;
+  background: transparent;
+  color: inherit;
+  border: 1px solid currentColor;
+  padding: 6px 12px;
+  font-size: 0.85rem;
   cursor: pointer;
+  opacity: 0.8;
 }
 
 button:hover {
-  border-color: #000;
+  opacity: 1;
 }
