@@ -1,33 +1,64 @@
+/* =========================
+   FONTS
+========================= */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap');
 
-body {
-  background: #fafafa;
-  color: #111;
+/* =========================
+   COLOR SYSTEM
+========================= */
+:root {
+  --bg: #fafafa;
+  --text: #111;
+  --text-secondary: #333;
+  --nav: #777;
+  --nav-hover: #000;
+  --border: #e6e6e6;
 }
 
+/* Manual dark mode */
 body.dark {
-  background: #0d0d0d;
-  color: #e5e5e5;
+  --bg: #0d0d0d;
+  --text: #e5e5e5;
+  --text-secondary: #cfcfcf;
+  --nav: #aaa;
+  --nav-hover: #fff;
+  --border: #333;
 }
 
-body.dark p {
-  color: #cfcfcf;
+/* System dark mode (only if no manual override) */
+@media (prefers-color-scheme: dark) {
+  body:not(.light) {
+    --bg: #0d0d0d;
+    --text: #e5e5e5;
+    --text-secondary: #cfcfcf;
+    --nav: #aaa;
+    --nav-hover: #fff;
+    --border: #333;
+  }
 }
 
-body.dark nav a {
-  color: #aaa;
+/* =========================
+   BASE
+========================= */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
 }
 
-body.dark hr {
-  border-top: 1px solid #333;
-}
-
+/* =========================
+   LAYOUT
+========================= */
 .container {
   max-width: 680px;
   margin: 100px auto;
   padding: 0 24px;
 }
 
+/* =========================
+   TYPOGRAPHY
+========================= */
 h1 {
   font-family: 'Playfair Display', serif;
   font-size: 3rem;
@@ -47,8 +78,12 @@ p {
   font-size: 1.05rem;
   line-height: 1.85;
   max-width: 65ch;
+  color: var(--text-secondary);
 }
 
+/* =========================
+   NAVIGATION
+========================= */
 nav {
   margin: 30px 0 50px;
   font-size: 0.95rem;
@@ -56,16 +91,17 @@ nav {
 
 nav a {
   text-decoration: none;
-  color: #777;
+  color: var(--nav);
   margin-right: 20px;
   position: relative;
   transition: color 0.2s ease;
 }
 
 nav a:hover {
-  color: #000;
+  color: var(--nav-hover);
 }
 
+/* underline animation */
 nav a::after {
   content: "";
   position: absolute;
@@ -73,7 +109,7 @@ nav a::after {
   height: 1px;
   left: 0;
   bottom: -4px;
-  background: #000;
+  background: var(--nav-hover);
   transition: width 0.25s ease;
 }
 
@@ -81,63 +117,48 @@ nav a:hover::after {
   width: 100%;
 }
 
+/* =========================
+   STRUCTURE
+========================= */
 section {
   margin-bottom: 70px;
 }
 
 hr {
   border: none;
-  border-top: 1px solid #e6e6e6;
+  border-top: 1px solid var(--border);
   margin: 50px 0;
 }
 
+/* =========================
+   LINKS
+========================= */
 a {
-  color: #000;
+  color: var(--nav-hover);
 }
 
 a:hover {
   opacity: 0.6;
 }
 
+/* =========================
+   ACCESSIBILITY
+========================= */
 a:focus, button:focus {
   outline: 2px solid #888;
   outline-offset: 3px;
 }
 
-section:hover {
-  transform: translateY(-1px);
-  transition: transform 0.2s ease;
-}
-
-@media (prefers-color-scheme: dark) {
-  body:not(.light) {
-    background: #0d0d0d;
-    color: #e5e5e5;
-  }
-
-  p {
-    color: #cfcfcf;
-  }
-
-  nav a {
-    color: #aaa;
-  }
-
-  nav a:hover {
-    color: #fff;
-  }
-
-  hr {
-    border-top: 1px solid #333;
-  }
-}
-
+/* reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
   }
 }
 
+/* =========================
+   BUTTON
+========================= */
 button {
   background: transparent;
   color: inherit;
@@ -150,4 +171,12 @@ button {
 
 button:hover {
   opacity: 1;
+}
+
+/* =========================
+   SUBTLE INTERACTION
+========================= */
+section:hover {
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
 }
