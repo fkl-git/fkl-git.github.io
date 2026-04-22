@@ -7,7 +7,13 @@
 </head>
 
 <body>
-
+<button id="theme-toggle" title="Toggle theme">
+  <svg id="toggle-icon" viewBox="0 0 24 24" width="14" height="14"
+    fill="none" stroke="currentColor" stroke-width="1.5"
+    stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+</button>
 <div class="container">
 
 <h1>Josh Michael Luistro</h1>
@@ -17,13 +23,6 @@ I study how institutions claim legitimacy—and where those claims begin to brea
 </p>
 
 <nav>
-<button id="theme-toggle" title="Toggle theme">
-  <svg id="toggle-icon" viewBox="0 0 24 24" width="14" height="14"
-    fill="none" stroke="currentColor" stroke-width="1.5"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-  </svg>
-</button>
   <a href="about.html">About</a>
   <a href="projects.html">Work</a>
   <a href="writing.html">Writing</a>
@@ -50,29 +49,16 @@ I study how institutions claim legitimacy—and where those claims begin to brea
 const toggle = document.getElementById("theme-toggle");
 const toggleIcon = document.getElementById("toggle-icon");
 
-const icons = {
-  dark:  'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z',
-  light: 'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 6a6 6 0 1 0 0 12A6 6 0 0 0 12 6z',
-  auto:  'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'
-};
+const moon = 'M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z';
+const sun  = 'M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41M12 6a6 6 0 1 0 0 12A6 6 0 0 0 12 6z';
 
-let state = "auto";
+let dark = false;
 
 toggle.addEventListener("click", () => {
-  const body = document.body;
-  if (state === "auto") {
-    state = "dark";
-    body.classList.add("dark");
-    body.classList.remove("light");
-  } else if (state === "dark") {
-    state = "light";
-    body.classList.add("light");
-    body.classList.remove("dark");
-  } else {
-    state = "auto";
-    body.classList.remove("dark", "light");
-  }
-  toggleIcon.innerHTML = `<path d="${icons[state]}"/>`;
+  dark = !dark;
+  document.body.classList.toggle("dark", dark);
+  document.body.classList.toggle("light", !dark);
+  toggleIcon.innerHTML = `<path d="${dark ? sun : moon}"/>`;
 });
 </script>
 </body>
