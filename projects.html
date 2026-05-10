@@ -1,30 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Projects | Josh Michael Luistro</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work | Josh Michael Luistro</title>
+  <script src="script.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<button id="theme-toggle" type="button">🌙</button>
+
 <div class="container">
-<h1>Projects</h1>
+  <header class="site-header">
+    <a class="site-title" href="index.html">Josh Michael Luistro</a>
 
-<h2>Sovereignty and Selectivity</h2>
-<p>
-A long-form legal analysis examining the limitations of the Rome Statute and the tension between sovereignty and universal justice.
-</p>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a href="about.html">About</a>
+      <a class="active" href="projects.html">Work</a>
+      <a href="writing.html">Writing</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
 
-<h2>Academic Competitions</h2>
-<p>
-Participation in national and international competitions focused on research, argumentation, and critical thinking.
-</p>
+  <main>
+    <h1>Work</h1>
 
-<h2>Leadership and Initiatives</h2>
-<p>
-Experience in student leadership and organizing initiatives that require coordination, communication, and strategic planning.
-</p>
+    <p class="lede">
+      A working archive of research, initiatives, academic projects, and public-facing writing.
+    </p>
 
-<a href="index.html">Back to Home</a>
+    <section>
+      <h2>Research and Analysis</h2>
+
+      <div class="card-grid">
+        <article class="card">
+          <h3>Sovereignty and Selectivity</h3>
+          <p>
+            A long-form legal analysis examining the Rome Statute, selective enforcement, and the limits of universal justice.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Philippine Fiscal Sustainability</h3>
+          <p>
+            Research on debt service, development spending, infrastructure pipelines, and public investment governance.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Leadership and Initiatives</h2>
+
+      <div class="card-grid">
+        <article class="card">
+          <h3>Academic Committee</h3>
+          <p>
+            Student Council work focused on academic culture, recognition systems, and student-led institutional improvement.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Research Outreach</h3>
+          <p>
+            Outreach to academics, policymakers, and institutions for research exposure in economics, governance, and development policy.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Future Builds</h2>
+      <p>
+        The broken Argument Mapper has been removed for now. A stronger replacement could be built later as a static, no-API research tool:
+        for example, a claim breakdown template, evidence tracker, or IB Global Politics case-study database.
+      </p>
+    </section>
+
+    <a class="back-link" href="index.html">← Back to Home</a>
+  </main>
 </div>
 </body>
 </html>
