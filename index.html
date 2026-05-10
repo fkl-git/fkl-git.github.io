@@ -1,64 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Josh Michael Luistro</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Josh Michael Luistro</title>
+  <script src="script.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-<button id="theme-toggle" title="Toggle theme">🌙</button>
+<button id="theme-toggle" type="button">🌙</button>
+
 <div class="container">
+  <header class="site-header">
+    <a class="site-title" href="index.html">Josh Michael Luistro</a>
 
-<h1>Josh Michael Luistro</h1>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a href="about.html">About</a>
+      <a href="projects.html">Work</a>
+      <a href="writing.html">Writing</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
 
-<p>
-I study how institutions claim legitimacy—and where those claims begin to break.
-</p>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Student · Researcher · Writer</p>
 
-<nav>
-  <a href="about.html">About</a>
-  <a href="projects.html">Work</a>
-  <a href="argument-mapper.html">Argument Mapper</a>
-  <a href="writing.html">Writing</a>
-  <a href="contact.html">Contact</a>
-</nav>
+      <h1>I study how institutions claim legitimacy — and where those claims begin to break.</h1>
 
-<hr>
+      <p class="lede">
+        My work sits at the intersection of international law, political economy, governance, and argumentation.
+        I am especially interested in how systems justify authority, distribute power, and respond when their promises fail in practice.
+      </p>
+    </section>
 
-<section>
-  <p>
-  My work focuses on international law, governance, and the tension between sovereignty and accountability.
-  </p>
-</section>
+    <hr>
 
-<section>
-  <h2>Selected Work</h2>
-  <p>
-  Sovereignty and Selectivity — a legal analysis of the Rome Statute and selective enforcement in international criminal law.
-  </p>
-</section>
+    <section>
+      <h2>Selected Work</h2>
 
-<section>
-  <h2>Projects</h2>
-  <p>
-    <a href="argument-mapper.html">Argument Mapper</a> — 
-    Input a claim and get a structured breakdown of supporting arguments, 
-    counterarguments, and evidence slots.
-  </p>
-</section>
+      <div class="card-grid">
+        <article class="card">
+          <h3>Sovereignty and Selectivity</h3>
+          <p>
+            A legal analysis of the Rome Statute, universal justice, and selective enforcement in international criminal law.
+          </p>
+        </article>
 
+        <article class="card">
+          <h3>Fiscal Sustainability Research</h3>
+          <p>
+            Ongoing work on public debt, development spending, infrastructure planning, and institutional accountability in the Philippines.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Current Focus</h2>
+      <p>
+        I am building a body of work around governance, development, economic policy, and the legitimacy of public institutions.
+        The goal is not to collect disconnected achievements, but to develop a coherent intellectual direction over time.
+      </p>
+    </section>
+  </main>
 </div>
-<script>
-const toggle = document.getElementById("theme-toggle");
-let dark = false;
-
-toggle.addEventListener("click", () => {
-  dark = !dark;
-  document.body.classList.toggle("dark", dark);
-  document.body.classList.toggle("light", !dark);
-  toggle.textContent = dark ? "☀️" : "🌙";
-});
-</script>
 </body>
 </html>
