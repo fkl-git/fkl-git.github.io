@@ -609,17 +609,38 @@ blockquote {
 }
 
 .pdf-preview-section {
-  max-width: 760px;
-  margin-top: 64px;
+  width: min(1100px, calc(100vw - 48px));
+  max-width: none;
+  margin-top: 80px;
+  margin-left: 50%;
+  transform: translateX(-50%);
 }
 
 .pdf-preview-section summary {
   cursor: pointer;
+  list-style: none;
   padding: 18px 0;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   color: var(--text);
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.pdf-preview-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.pdf-preview-section summary::before {
+  content: "▾";
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
+}
+
+.pdf-preview-section details:not([open]) summary::before {
+  transform: rotate(-90deg);
 }
 
 .pdf-frame-wrapper {
@@ -628,12 +649,25 @@ blockquote {
   border-radius: 18px;
   overflow: hidden;
   background: var(--surface);
+  box-shadow: var(--shadow);
 }
 
 .pdf-frame {
   width: 100%;
-  height: 720px;
+  height: 900px;
   border: 0;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .pdf-preview-section {
+    width: calc(100vw - 32px);
+    margin-top: 56px;
+  }
+
+  .pdf-frame {
+    height: 620px;
+  }
 }
 
 @media (max-width: 640px) {
