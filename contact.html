@@ -1,22 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Contact Me! | Josh Michael Luistro</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact | Josh Michael Luistro</title>
+  <script src="script.js"></script>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<button id="theme-toggle" type="button">🌙</button>
+
 <div class="container">
+  <header class="site-header">
+    <a class="site-title" href="index.html">Josh Michael Luistro</a>
 
-<h1>Contact</h1>
+    <nav class="site-nav" aria-label="Main navigation">
+      <a href="about.html">About</a>
+      <a href="projects.html">Work</a>
+      <a href="writing.html">Writing</a>
+      <a class="active" href="contact.html">Contact</a>
+    </nav>
+  </header>
 
-<p>Email: josh@joshmichaelluistro.com</p>
+  <main>
+    <h1>Contact</h1>
 
-<p>
-For academic inquiries, collaborations, opportunities, or even a simple chat, feel free to reach out.
-</p>
+    <p class="lede">
+      For academic inquiries, collaborations, research opportunities, or conversation, feel free to reach out.
+    </p>
 
-<a href="index.html">Back to Home</a>
+    <section>
+      <h2>Email</h2>
+      <p><a href="mailto:josh@joshmichaelluistro.com">josh@joshmichaelluistro.com</a></p>
+    </section>
+
+    <section>
+      <h2>Areas of Interest</h2>
+      <ul class="list-clean">
+        <li>International law and institutional legitimacy</li>
+        <li>Political economy and development policy</li>
+        <li>Fiscal sustainability and public investment governance</li>
+        <li>Argumentation, writing, and student-led academic initiatives</li>
+      </ul>
+    </section>
+
+    <a class="back-link" href="index.html">← Back to Home</a>
+  </main>
 </div>
 </body>
 </html>
