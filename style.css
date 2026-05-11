@@ -690,148 +690,20 @@ blockquote {
   }
 }
 /* =========================
-   IB ARGUMENT LAB — POLISH PASS
+   IB ARGUMENT LAB — FORM FIX
    ========================= */
 
-.lab-page {
-  max-width: 1180px;
-}
-
-/* Hero spacing */
-.lab-hero {
-  margin-bottom: 72px;
-}
-
-.lab-hero .lede {
-  max-width: 800px;
-  font-size: 1.35rem;
-  line-height: 1.75;
-}
-
-/* Feature cards */
-.lab-feature-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 40px;
-}
-
-.lab-feature-card {
-  padding: 24px;
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.lab-feature-number {
-  display: inline-block;
-  margin-bottom: 16px;
-  color: var(--muted);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.lab-feature-card h3 {
-  margin: 0 0 10px;
-  font-size: 1.05rem;
-}
-
-.lab-feature-card p {
-  margin: 0;
-  font-size: 0.96rem;
-  line-height: 1.7;
-}
-
-/* Main app layout */
-.lab-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) 360px;
-  gap: 32px;
-  align-items: start;
-  margin-top: 48px;
-}
-
-.lab-main,
-.lab-sidebar {
-  display: grid;
-  gap: 32px;
-}
-
-/* Cards */
-.lab-card {
-  border: 1px solid var(--border);
-  border-radius: 30px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-
-.lab-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 30px 32px 24px;
-  border-bottom: 1px solid var(--border);
-}
-
-.lab-card-header h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  letter-spacing: -0.02em;
-}
-
-.lab-kicker {
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.lab-status {
-  margin: 0;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-/* Controls */
-.lab-controls {
-  display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
-  gap: 22px;
-  padding: 28px 32px 18px;
-}
-
-/* This fixes the ugly jagged form layout */
-.lab-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  padding: 18px 32px 0;
-}
-
-.lab-field-full {
-  grid-column: 1 / -1;
-}
-
-/* Labels always sit above input boxes */
+/* 1. Force labels to sit perfectly above each box */
 .lab-label {
   display: flex !important;
   flex-direction: column !important;
-  gap: 10px;
+  gap: 8px;
+  margin-bottom: 0;
   width: 100%;
+  font-weight: 600;
 }
 
+/* 2. Editorial label text */
 .lab-label > span {
   display: block;
   color: var(--muted);
@@ -841,43 +713,45 @@ blockquote {
   text-transform: uppercase;
 }
 
-/* Inputs */
+/* 3. Modernize all text boxes, inputs, and dropdowns */
 .lab-label textarea,
-.lab-label select,
-.lab-label input {
-  width: 100%;
-  display: block;
-  padding: 16px 17px;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.98rem;
-  line-height: 1.6;
-  box-shadow: none;
-  transition:
-    border-color 0.18s ease,
-    background 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.lab-label textarea {
-  min-height: 126px;
-  resize: vertical;
-}
-
 .lab-label input,
 .lab-label select {
-  min-height: 54px;
+  width: 100%;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-sizing: border-box;
+  box-shadow: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
+/* 4. Textareas should only resize vertically */
+.lab-label textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* 5. Inputs and selects should have a consistent height */
+.lab-label input,
+.lab-label select {
+  min-height: 52px;
+}
+
+/* 6. Soften placeholder text */
 .lab-label textarea::placeholder,
 .lab-label input::placeholder {
   color: var(--muted);
-  opacity: 0.72;
+  opacity: 0.7;
+  font-family: inherit;
 }
 
+/* 7. Clean dropdown styling */
 .lab-label select {
   appearance: none;
   background-image:
@@ -891,16 +765,36 @@ blockquote {
   padding-right: 44px;
 }
 
+/* 8. Modern focus state */
 .lab-label textarea:focus,
 .lab-label input:focus,
 .lab-label select:focus {
   outline: none;
   border-color: var(--text);
-  background: var(--surface);
-  box-shadow: 0 0 0 4px rgba(127, 127, 127, 0.09);
+  background-color: var(--surface);
+  box-shadow: 0 0 0 3px rgba(127, 127, 127, 0.08);
 }
 
-/* Buttons */
+/* 9. Make the form grid cleaner */
+.lab-controls {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 22px;
+  padding: 28px 32px 18px;
+}
+
+.lab-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  padding: 18px 32px 0;
+}
+
+.lab-field-full {
+  grid-column: 1 / -1;
+}
+
+/* 10. Polish buttons */
 .lab-actions {
   display: flex;
   flex-wrap: wrap;
@@ -918,16 +812,12 @@ blockquote {
   min-height: 46px;
   padding: 0 20px;
   border-radius: 999px;
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-size: 0.92rem;
   font-weight: 650;
   cursor: pointer;
   text-decoration: none;
-  transition:
-    transform 0.18s ease,
-    opacity 0.18s ease,
-    border-color 0.18s ease,
-    background 0.18s ease;
+  transition: transform 0.18s ease, opacity 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .lab-btn:hover {
@@ -957,135 +847,38 @@ blockquote {
   border-color: #9f1d1d;
 }
 
-.lab-btn-small {
-  min-height: 38px;
-  padding: 0 14px;
-  font-size: 0.84rem;
+/* 11. More breathing room between major sections */
+.lab-shell {
+  gap: 36px;
 }
 
-/* Saved drafts */
-.lab-saved {
-  padding: 26px 32px 32px;
+.lab-main,
+.lab-sidebar {
+  gap: 36px;
 }
 
-.lab-inline-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.lab-card {
+  margin-bottom: 4px;
 }
 
-.lab-inline-actions-stacked {
-  margin-top: 16px;
-}
-
-.lab-note {
-  margin: 20px 0 0;
-  color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.7;
-}
-
-/* Checklist */
-.lab-checklist {
-  list-style: none;
-  margin: 0;
-  padding: 26px 32px 32px;
-  display: grid;
-  gap: 16px;
-}
-
-.lab-checklist li {
-  display: grid;
-  grid-template-columns: 16px 1fr;
-  gap: 12px;
-  align-items: start;
-  color: var(--text-secondary);
-  font-size: 0.96rem;
-  line-height: 1.7;
-}
-
-.lab-check-icon {
-  color: var(--muted);
-  line-height: 1.6;
-}
-
-/* Output section */
-.lab-output-card {
-  margin-top: 8px;
-}
-
-.lab-output-card .lab-card-header {
-  align-items: center;
-}
-
-.lab-output {
-  margin: 0;
-  padding: 32px;
-  min-height: 360px;
-  background: var(--bg);
-  color: var(--text-secondary);
-  font-family: 'Inter', sans-serif;
-  font-size: 0.96rem;
-  line-height: 1.85;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-x: auto;
-}
-
-/* Better vertical separation */
-.lab-builder {
-  margin-bottom: 8px;
-}
-
-.lab-sidebar .lab-card + .lab-card {
-  margin-top: 8px;
-}
-
-/* Responsive layout */
-@media (max-width: 1000px) {
-  .lab-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .lab-feature-row {
-    grid-template-columns: 1fr;
-  }
-}
-
+/* 12. Mobile cleanup */
 @media (max-width: 760px) {
-  .lab-hero {
-    margin-bottom: 52px;
-  }
-
   .lab-controls,
   .lab-fields {
     grid-template-columns: 1fr;
+    padding-left: 22px;
+    padding-right: 22px;
   }
 
   .lab-field-full {
     grid-column: auto;
   }
 
-  .lab-card-header,
-  .lab-controls,
-  .lab-fields,
-  .lab-actions,
-  .lab-saved,
-  .lab-checklist,
-  .lab-output {
-    padding-left: 22px;
-    padding-right: 22px;
-  }
-
-  .lab-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .lab-actions,
-  .lab-inline-actions {
+  .lab-actions {
     flex-direction: column;
     align-items: stretch;
+    padding-left: 22px;
+    padding-right: 22px;
   }
 
   .lab-btn {
