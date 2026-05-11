@@ -3,17 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>IB Argument Lab | Josh Michael Luistro</title>
-
   <script src="script.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 <button id="theme-toggle" type="button">🌙</button>
 
-<div class="container tool-container">
+<div class="container lab-page">
   <header class="site-header">
     <a class="site-title" href="index.html">Josh Michael Luistro</a>
 
@@ -26,108 +23,135 @@
   </header>
 
   <main>
-    <section class="page-intro">
+    <section class="lab-hero">
       <p class="eyebrow">Tool</p>
-
       <h1>IB Argument Lab</h1>
-
-<p class="lede">
-  A private planning workspace for turning rough ideas into structured claims, evidence, counterclaims, evaluation, and final judgement.
-</p>
-    </section>
-
-    <section class="tool-panel">
-      <div class="tool-topbar">
-        <label>
-          Mode
-          <select id="modeSelect">
-            <option value="global-politics">Global Politics Essay Planner</option>
-            <option value="economics">Economics Evaluation Builder</option>
-            <option value="tok">TOK Argument Builder</option>
-            <option value="research">Research Argument Planner</option>
-            <option value="debate">Debate Case Builder</option>
-          </select>
-        </label>
-
-        <label>
-          Draft Title
-          <input id="draftTitle" type="text" placeholder="Example: Human Rights Selectivity GP Plan">
-        </label>
-      </div>
-
-      <div id="dynamicFields" class="dynamic-fields"></div>
-
-      <div class="tool-actions">
-        <button type="button" class="primary-button" id="generateBtn">Generate Outline</button>
-        <button type="button" class="secondary-button" id="saveBtn">Save Draft</button>
-        <button type="button" class="secondary-button" id="clearBtn">Clear</button>
-      </div>
-    </section>
-
-    <section class="saved-drafts-panel">
-      <div class="output-header">
-        <h2>Saved Drafts</h2>
-      </div>
-
-      <div class="saved-drafts-controls">
-        <select id="savedDraftsSelect">
-          <option value="">No saved draft selected</option>
-        </select>
-
-        <button type="button" class="secondary-button small-button" id="loadBtn">Load</button>
-        <button type="button" class="secondary-button small-button danger-button" id="deleteBtn">Delete</button>
-      </div>
-
-      <p class="tool-note">
-        Drafts are saved only in this browser using local storage. They are not uploaded anywhere.
+      <p class="lede">
+        A private planning workspace for turning rough ideas into structured claims, evidence, counterclaims, evaluation, and final judgement.
       </p>
-    </section>
 
-    <section class="output-section">
-      <div class="output-header">
-        <h2>Structured Outline</h2>
-
-        <div class="output-actions">
-          <button type="button" class="secondary-button small-button" id="copyBtn">Copy</button>
-          <button type="button" class="secondary-button small-button" id="downloadBtn">Download .txt</button>
-        </div>
-      </div>
-
-      <pre id="output" class="argument-output">Your structured argument will appear here.</pre>
-    </section>
-
-    <section class="tool-guide">
-      <h2>How to Use This Well</h2>
-
-      <div class="finding-list">
-        <article class="finding-item">
-          <span>01</span>
+      <div class="lab-feature-row">
+        <article class="lab-feature-card">
+          <span class="lab-feature-number">01</span>
+          <h3>Subject-specific modes</h3>
           <p>
-            Start with the exact question. A vague question will produce a vague argument.
+            Switch between Global Politics, Economics, TOK, research, and debate without forcing one structure onto every task.
           </p>
         </article>
 
-        <article class="finding-item">
-          <span>02</span>
+        <article class="lab-feature-card">
+          <span class="lab-feature-number">02</span>
+          <h3>Private local drafts</h3>
           <p>
-            Use the claim as a direct answer, not a topic. Avoid writing only what the essay is “about.”
+            Save multiple outlines directly in your browser, reload them later, and refine them over time as your thinking develops.
           </p>
         </article>
 
-        <article class="finding-item">
-          <span>03</span>
+        <article class="lab-feature-card">
+          <span class="lab-feature-number">03</span>
+          <h3>Cleaner argument logic</h3>
           <p>
-            The warrant is where the logic lives. Explain the mechanism connecting the claim to the evidence.
-          </p>
-        </article>
-
-        <article class="finding-item">
-          <span>04</span>
-          <p>
-            Evaluation should make a judgement. It should explain limits, conditions, trade-offs, and relative strength.
+            Pressure-test your ideas by making the claim, evidence, counterclaim, and evaluation explicitly visible.
           </p>
         </article>
       </div>
+    </section>
+
+    <section class="lab-shell">
+      <div class="lab-main">
+        <section class="lab-card lab-builder">
+          <div class="lab-card-header">
+            <div>
+              <p class="lab-kicker">Workspace</p>
+              <h2>Build your argument</h2>
+            </div>
+
+            <p id="labStatus" class="lab-status" aria-live="polite">Ready.</p>
+          </div>
+
+          <div class="lab-controls">
+            <label class="lab-label">
+              <span>Mode</span>
+              <select id="modeSelect">
+                <option value="global-politics">Global Politics Essay Planner</option>
+                <option value="economics">Economics Evaluation Builder</option>
+                <option value="tok">TOK Argument Builder</option>
+                <option value="research">Research Argument Planner</option>
+                <option value="debate">Debate Case Builder</option>
+              </select>
+            </label>
+
+            <label class="lab-label">
+              <span>Draft title</span>
+              <input id="draftTitle" type="text" placeholder="Example: Human Rights Selectivity GP Plan">
+            </label>
+          </div>
+
+          <div id="dynamicFields" class="lab-fields"></div>
+
+          <div class="lab-actions">
+            <button type="button" class="lab-btn lab-btn-primary" id="generateBtn">Generate outline</button>
+            <button type="button" class="lab-btn lab-btn-secondary" id="saveBtn">Save draft</button>
+            <button type="button" class="lab-btn lab-btn-secondary" id="clearBtn">Clear</button>
+          </div>
+        </section>
+
+        <section class="lab-card lab-output-card">
+          <div class="lab-card-header">
+            <div>
+              <p class="lab-kicker">Output</p>
+              <h2>Structured outline</h2>
+            </div>
+
+            <div class="lab-inline-actions">
+              <button type="button" class="lab-btn lab-btn-secondary lab-btn-small" id="copyBtn">Copy</button>
+              <button type="button" class="lab-btn lab-btn-secondary lab-btn-small" id="downloadBtn">Download .txt</button>
+            </div>
+          </div>
+
+          <pre id="output" class="lab-output">Your structured argument will appear here.</pre>
+        </section>
+      </div>
+
+      <aside class="lab-sidebar">
+        <section class="lab-card">
+          <div class="lab-card-header">
+            <div>
+              <p class="lab-kicker">Local storage</p>
+              <h2>Saved drafts</h2>
+            </div>
+          </div>
+
+          <div class="lab-saved">
+            <label class="lab-label">
+              <span>Choose a draft</span>
+              <select id="savedDraftsSelect">
+                <option value="">Select a saved draft</option>
+              </select>
+            </label>
+
+            <div class="lab-inline-actions lab-inline-actions-stacked">
+              <button type="button" class="lab-btn lab-btn-secondary" id="loadBtn">Load</button>
+              <button type="button" class="lab-btn lab-btn-danger" id="deleteBtn">Delete</button>
+            </div>
+
+            <p class="lab-note">
+              Drafts are stored only in this browser. They are not uploaded anywhere.
+            </p>
+          </div>
+        </section>
+
+        <section class="lab-card">
+          <div class="lab-card-header">
+            <div>
+              <p class="lab-kicker">Checklist</p>
+              <h2>What good answers require</h2>
+            </div>
+          </div>
+
+          <ul id="modeChecklist" class="lab-checklist"></ul>
+        </section>
+      </aside>
     </section>
 
     <a class="back-link" href="projects.html">← Back to Work</a>
@@ -137,13 +161,14 @@
 <script>
   const templates = {
     "global-politics": {
-      label: "Global Politics Essay Planner",
+      title: "Global Politics Essay Planner",
       fields: [
         {
           id: "question",
           label: "Essay Question",
           placeholder: "Example: To what extent are human rights universal in practice?",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "politicalIssue",
@@ -154,14 +179,15 @@
         {
           id: "concept",
           label: "Key Concept",
-          placeholder: "Example: sovereignty, legitimacy, power, human rights, development, peace, conflict.",
-          rows: 2
+          placeholder: "Example: sovereignty, legitimacy, power, development, human rights, conflict.",
+          rows: 3
         },
         {
           id: "claim",
           label: "Main Claim",
           placeholder: "Write your direct answer to the question.",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "caseStudy",
@@ -179,7 +205,8 @@
           id: "analysis",
           label: "Analysis",
           placeholder: "How does this evidence prove the claim? What political mechanism is happening?",
-          rows: 4
+          rows: 4,
+          span: "full"
         },
         {
           id: "counterclaim",
@@ -197,7 +224,8 @@
           id: "judgement",
           label: "Final Judgement",
           placeholder: "Write your final refined argument in one or two sentences.",
-          rows: 3
+          rows: 3,
+          span: "full"
         }
       ],
       checklist: [
@@ -211,67 +239,71 @@
     },
 
     "economics": {
-      label: "Economics Evaluation Builder",
+      title: "Economics Evaluation Builder",
       fields: [
         {
           id: "question",
           label: "Question / Policy Issue",
           placeholder: "Example: Evaluate the effectiveness of an indirect tax on sugary drinks.",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "concept",
           label: "Economic Concept",
-          placeholder: "Example: market failure, externalities, elasticity, government intervention, welfare loss.",
-          rows: 2
+          placeholder: "Example: market failure, elasticity, externalities, intervention, welfare loss.",
+          rows: 3
         },
         {
           id: "diagram",
           label: "Diagram Needed",
-          placeholder: "What diagram would you use? Example: negative externality of consumption, indirect tax, subsidy.",
-          rows: 2
+          placeholder: "What diagram should accompany this argument?",
+          rows: 3
         },
         {
           id: "shortRun",
           label: "Short-Run Effect",
-          placeholder: "What happens immediately after the policy or economic change?",
-          rows: 3
+          placeholder: "What happens immediately?",
+          rows: 4
         },
         {
           id: "longRun",
           label: "Long-Run Effect",
-          placeholder: "What happens over time? Does behavior, investment, or market adjustment change?",
-          rows: 3
+          placeholder: "What happens over time?",
+          rows: 4
         },
         {
           id: "stakeholders",
           label: "Stakeholders",
-          placeholder: "Who gains and who loses? Consumers, producers, government, workers, taxpayers, foreign firms?",
-          rows: 4
+          placeholder: "Who gains and who loses? Consumers, firms, government, workers, taxpayers?",
+          rows: 4,
+          span: "full"
         },
         {
           id: "advantages",
           label: "Advantages",
-          placeholder: "Why might the policy work? What benefits does it create?",
+          placeholder: "Why might the policy work?",
           rows: 4
         },
         {
           id: "limitations",
           label: "Limitations",
-          placeholder: "What assumptions, unintended consequences, or implementation problems limit the policy?",
+          placeholder: "What assumptions or implementation problems weaken it?",
           rows: 4
         },
         {
           id: "evaluation",
           label: "Evaluation",
-          placeholder: "Under what conditions is the policy effective? What does its success depend on?",
-          rows: 4
+          placeholder: "Under what conditions is the policy effective?",
+          rows: 4,
+          span: "full"
         },
         {
           id: "judgement",
           label: "Final Judgement",
           placeholder: "Write your final evaluative judgement.",
-          rows: 3
+          rows: 3,
+          span: "full"
         }
       ],
       checklist: [
@@ -285,25 +317,27 @@
     },
 
     "tok": {
-      label: "TOK Argument Builder",
+      title: "TOK Argument Builder",
       fields: [
         {
           id: "prompt",
           label: "TOK Prompt",
           placeholder: "Paste or write the TOK prompt here.",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "knowledgeQuestion",
           label: "Knowledge Question",
           placeholder: "What question about knowledge is underneath the prompt?",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "aok",
           label: "Area of Knowledge",
           placeholder: "Example: history, human sciences, natural sciences, arts, mathematics.",
-          rows: 2
+          rows: 3
         },
         {
           id: "claim",
@@ -320,7 +354,7 @@
         {
           id: "explanation",
           label: "Explanation",
-          placeholder: "How does the example show something about how knowledge works?",
+          placeholder: "How does the example reveal something about knowledge?",
           rows: 4
         },
         {
@@ -339,13 +373,15 @@
           id: "implication",
           label: "Implication",
           placeholder: "Why does this matter for knowers or knowledge communities?",
-          rows: 4
+          rows: 4,
+          span: "full"
         },
         {
           id: "judgement",
           label: "Final Insight",
           placeholder: "What is your final nuanced insight?",
-          rows: 3
+          rows: 3,
+          span: "full"
         }
       ],
       checklist: [
@@ -359,61 +395,68 @@
     },
 
     "research": {
-      label: "Research Argument Planner",
+      title: "Research Argument Planner",
       fields: [
         {
           id: "topic",
           label: "Research Topic",
           placeholder: "What is the research about?",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "researchQuestion",
           label: "Research Question",
           placeholder: "Write the question the paper is trying to answer.",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "thesis",
           label: "Working Thesis",
           placeholder: "What is your main answer or argument?",
-          rows: 4
+          rows: 4,
+          span: "full"
         },
         {
           id: "literature",
           label: "Relevant Literature / Sources",
-          placeholder: "What sources, reports, authors, datasets, or documents are central?",
+          placeholder: "Which reports, authors, papers, or documents matter most?",
           rows: 4
         },
         {
           id: "framework",
           label: "Conceptual Framework",
-          placeholder: "What concepts or indicators will you use to analyze the issue?",
+          placeholder: "What concepts or indicators are you using to analyze the issue?",
           rows: 4
         },
         {
           id: "evidence",
           label: "Evidence Base",
           placeholder: "What evidence supports your thesis?",
-          rows: 4
+          rows: 4,
+          span: "full"
         },
         {
           id: "counterargument",
           label: "Counterargument / Alternative Interpretation",
           placeholder: "What might another scholar, institution, or policymaker argue instead?",
-          rows: 4
+          rows: 4,
+          span: "full"
         },
         {
           id: "synthesis",
           label: "Synthesis",
           placeholder: "How do the sources agree, disagree, or complicate each other?",
-          rows: 4
+          rows: 4,
+          span: "full"
         },
         {
           id: "conclusion",
           label: "Conclusion",
           placeholder: "What final answer does the research reach?",
-          rows: 3
+          rows: 3,
+          span: "full"
         }
       ],
       checklist: [
@@ -427,19 +470,20 @@
     },
 
     "debate": {
-      label: "Debate Case Builder",
+      title: "Debate Case Builder",
       fields: [
         {
           id: "motion",
           label: "Motion / Proposition",
           placeholder: "Write the debate motion or claim.",
-          rows: 3
+          rows: 3,
+          span: "full"
         },
         {
           id: "side",
           label: "Side",
           placeholder: "Are you arguing proposition, opposition, affirmative, or negative?",
-          rows: 2
+          rows: 3
         },
         {
           id: "burden",
@@ -451,7 +495,8 @@
           id: "argument",
           label: "Main Argument",
           placeholder: "What is your strongest argument?",
-          rows: 4
+          rows: 4,
+          span: "full"
         },
         {
           id: "mechanism",
@@ -487,7 +532,8 @@
           id: "weighing",
           label: "Weighing",
           placeholder: "Why does your impact matter more than theirs?",
-          rows: 4
+          rows: 4,
+          span: "full"
         }
       ],
       checklist: [
@@ -502,37 +548,57 @@
   };
 
   const storageKey = "ibArgumentLabDrafts";
-
   const modeSelect = document.getElementById("modeSelect");
+  const draftTitle = document.getElementById("draftTitle");
   const dynamicFields = document.getElementById("dynamicFields");
   const output = document.getElementById("output");
-  const draftTitle = document.getElementById("draftTitle");
   const savedDraftsSelect = document.getElementById("savedDraftsSelect");
+  const modeChecklist = document.getElementById("modeChecklist");
+  const labStatus = document.getElementById("labStatus");
+
+  function setStatus(message) {
+    labStatus.textContent = message;
+  }
 
   function getCurrentTemplate() {
     return templates[modeSelect.value];
   }
 
+  function renderChecklist() {
+    const template = getCurrentTemplate();
+    modeChecklist.innerHTML = "";
+
+    template.checklist.forEach((item) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="lab-check-icon">•</span><span>${item}</span>`;
+      modeChecklist.appendChild(li);
+    });
+  }
+
   function renderFields() {
     const template = getCurrentTemplate();
-
     dynamicFields.innerHTML = "";
 
     template.fields.forEach((field) => {
-      const label = document.createElement("label");
-      label.setAttribute("for", field.id);
-      label.textContent = field.label;
+      const wrapper = document.createElement("label");
+      wrapper.className = `lab-label lab-field ${field.span === "full" ? "lab-field-full" : ""}`;
+
+      const labelText = document.createElement("span");
+      labelText.textContent = field.label;
+      wrapper.appendChild(labelText);
 
       const textarea = document.createElement("textarea");
       textarea.id = field.id;
       textarea.rows = field.rows || 3;
       textarea.placeholder = field.placeholder || "";
 
-      label.appendChild(textarea);
-      dynamicFields.appendChild(label);
+      wrapper.appendChild(textarea);
+      dynamicFields.appendChild(wrapper);
     });
 
+    renderChecklist();
     output.textContent = "Your structured argument will appear here.";
+    setStatus(`Mode set to ${template.title}.`);
   }
 
   function getFieldValues() {
@@ -551,36 +617,33 @@
 
     template.fields.forEach((field) => {
       const element = document.getElementById(field.id);
-      element.value = values[field.id] || "";
+      if (element) {
+        element.value = values[field.id] || "";
+      }
     });
-  }
-
-  function formatLabel(label) {
-    return label.toUpperCase();
   }
 
   function generateOutline() {
     const template = getCurrentTemplate();
     const values = getFieldValues();
+    const title = draftTitle.value.trim() || "[Untitled draft]";
 
-    let text = `${template.label.toUpperCase()}\n\n`;
-
-    text += `Draft Title:\n${draftTitle.value.trim() || "[Untitled draft]"}\n\n`;
+    let text = `${template.title.toUpperCase()}\n\n`;
+    text += `DRAFT TITLE\n${title}\n\n`;
 
     template.fields.forEach((field, index) => {
       const number = String(index + 1).padStart(2, "0");
       const value = values[field.id] || "[Not yet written]";
-
-      text += `${number}. ${formatLabel(field.label)}\n${value}\n\n`;
+      text += `${number}. ${field.label.toUpperCase()}\n${value}\n\n`;
     });
 
-    text += "QUALITY CHECKLIST\n";
-
+    text += `QUALITY CHECKLIST\n`;
     template.checklist.forEach((item) => {
       text += `- ${item}\n`;
     });
 
     output.textContent = text.trim();
+    setStatus("Structured outline generated.");
   }
 
   function getSavedDrafts() {
@@ -592,9 +655,12 @@
     localStorage.setItem(storageKey, JSON.stringify(drafts));
   }
 
+  function slugify(text) {
+    return text.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
   function refreshSavedDrafts() {
     const drafts = getSavedDrafts();
-
     savedDraftsSelect.innerHTML = "";
 
     const defaultOption = document.createElement("option");
@@ -602,10 +668,10 @@
     defaultOption.textContent = "Select a saved draft";
     savedDraftsSelect.appendChild(defaultOption);
 
-    Object.keys(drafts).forEach((key) => {
+    Object.keys(drafts).forEach((id) => {
       const option = document.createElement("option");
-      option.value = key;
-      option.textContent = drafts[key].title || key;
+      option.value = id;
+      option.textContent = drafts[id].title;
       savedDraftsSelect.appendChild(option);
     });
   }
@@ -614,12 +680,12 @@
     const title = draftTitle.value.trim();
 
     if (!title) {
-      alert("Please add a draft title before saving.");
+      setStatus("Please add a draft title before saving.");
       return;
     }
 
     const drafts = getSavedDrafts();
-    const id = `${modeSelect.value}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    const id = `${modeSelect.value}-${slugify(title)}`;
 
     drafts[id] = {
       title,
@@ -631,16 +697,15 @@
     setSavedDrafts(drafts);
     refreshSavedDrafts();
     savedDraftsSelect.value = id;
+    setStatus(`Saved draft: ${title}`);
     generateOutline();
-
-    alert("Draft saved in this browser.");
   }
 
   function loadDraft() {
     const id = savedDraftsSelect.value;
 
     if (!id) {
-      alert("Please select a saved draft first.");
+      setStatus("Select a saved draft first.");
       return;
     }
 
@@ -648,36 +713,36 @@
     const draft = drafts[id];
 
     if (!draft) {
-      alert("Draft not found.");
+      setStatus("Draft not found.");
       return;
     }
 
     modeSelect.value = draft.mode;
     draftTitle.value = draft.title;
-
     renderFields();
     setFieldValues(draft.values);
     generateOutline();
+    setStatus(`Loaded draft: ${draft.title}`);
   }
 
   function deleteDraft() {
     const id = savedDraftsSelect.value;
 
     if (!id) {
-      alert("Please select a saved draft first.");
+      setStatus("Select a saved draft first.");
       return;
     }
 
-    const confirmed = confirm("Delete this saved draft?");
+    const drafts = getSavedDrafts();
+    const draftTitleToDelete = drafts[id] ? drafts[id].title : "Draft";
+    const confirmed = confirm(`Delete "${draftTitleToDelete}"?`);
+
     if (!confirmed) return;
 
-    const drafts = getSavedDrafts();
     delete drafts[id];
-
     setSavedDrafts(drafts);
     refreshSavedDrafts();
-
-    alert("Draft deleted.");
+    setStatus(`Deleted draft: ${draftTitleToDelete}`);
   }
 
   function clearFields() {
@@ -686,27 +751,29 @@
 
     draftTitle.value = "";
     renderFields();
+    setStatus("Current form cleared.");
   }
 
   function copyOutput() {
     navigator.clipboard.writeText(output.textContent).then(() => {
-      alert("Outline copied.");
+      setStatus("Outline copied to clipboard.");
     });
   }
 
   function downloadOutput() {
     const text = output.textContent;
     const title = draftTitle.value.trim() || "ib-argument-lab-outline";
-    const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const fileName = `${slugify(title) || "ib-argument-lab-outline"}.txt`;
     const blob = new Blob([text], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${safeTitle}.txt`;
-    link.click();
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
 
     URL.revokeObjectURL(url);
+    setStatus(`Downloaded ${fileName}`);
   }
 
   modeSelect.addEventListener("change", renderFields);
