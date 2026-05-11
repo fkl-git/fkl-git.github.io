@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>IB Argument Lab | Josh Michael Luistro</title>
+
+  <script src="script.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<button id="theme-toggle" type="button">🌙</button>
+
+<div class="container tool-container">
+  <header class="site-header">
+    <a class="site-title" href="index.html">Josh Michael Luistro</a>
+
+    <nav class="site-nav" aria-label="Main navigation">
+      <a href="about.html">About</a>
+      <a class="active" href="projects.html">Work</a>
+      <a href="writing.html">Writing</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="page-intro">
+      <p class="eyebrow">Tool</p>
+
+      <h1>IB Argument Lab</h1>
+
+      <p class="lede">
+        A static, no-API planning tool for building stronger arguments in Global Politics, Economics, TOK, research, and debate.
+      </p>
+    </section>
+
+    <section class="tool-panel">
+      <div class="tool-topbar">
+        <label>
+          Mode
+          <select id="modeSelect">
+            <option value="global-politics">Global Politics Essay Planner</option>
+            <option value="economics">Economics Evaluation Builder</option>
+            <option value="tok">TOK Argument Builder</option>
+            <option value="research">Research Argument Planner</option>
+            <option value="debate">Debate Case Builder</option>
+          </select>
+        </label>
+
+        <label>
+          Draft Title
+          <input id="draftTitle" type="text" placeholder="Example: Human Rights Selectivity GP Plan">
+        </label>
+      </div>
+
+      <div id="dynamicFields" class="dynamic-fields"></div>
+
+      <div class="tool-actions">
+        <button type="button" class="primary-button" id="generateBtn">Generate Outline</button>
+        <button type="button" class="secondary-button" id="saveBtn">Save Draft</button>
+        <button type="button" class="secondary-button" id="clearBtn">Clear</button>
+      </div>
+    </section>
+
+    <section class="saved-drafts-panel">
+      <div class="output-header">
+        <h2>Saved Drafts</h2>
+      </div>
+
+      <div class="saved-drafts-controls">
+        <select id="savedDraftsSelect">
+          <option value="">No saved draft selected</option>
+        </select>
+
+        <button type="button" class="secondary-button small-button" id="loadBtn">Load</button>
+        <button type="button" class="secondary-button small-button danger-button" id="deleteBtn">Delete</button>
+      </div>
+
+      <p class="tool-note">
+        Drafts are saved only in this browser using local storage. They are not uploaded anywhere.
+      </p>
+    </section>
+
+    <section class="output-section">
+      <div class="output-header">
+        <h2>Structured Outline</h2>
+
+        <div class="output-actions">
+          <button type="button" class="secondary-button small-button" id="copyBtn">Copy</button>
+          <button type="button" class="secondary-button small-button" id="downloadBtn">Download .txt</button>
+        </div>
+      </div>
+
+      <pre id="output" class="argument-output">Your structured argument will appear here.</pre>
+    </section>
+
+    <section class="tool-guide">
+      <h2>How to Use This Well</h2>
+
+      <div class="finding-list">
+        <article class="finding-item">
+          <span>01</span>
+          <p>
+            Start with the exact question. A vague question will produce a vague argument.
+          </p>
+        </article>
+
+        <article class="finding-item">
+          <span>02</span>
+          <p>
+            Use the claim as a direct answer, not a topic. Avoid writing only what the essay is “about.”
+          </p>
+        </article>
+
+        <article class="finding-item">
+          <span>03</span>
+          <p>
+            The warrant is where the logic lives. Explain the mechanism connecting the claim to the evidence.
+          </p>
+        </article>
+
+        <article class="finding-item">
+          <span>04</span>
+          <p>
+            Evaluation should make a judgement. It should explain limits, conditions, trade-offs, and relative strength.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <a class="back-link" href="projects.html">← Back to Work</a>
+  </main>
+</div>
+
+<script>
+  const templates = {
+    "global-politics": {
+      label: "Global Politics Essay Planner",
+      fields: [
+        {
+          id: "question",
+          label: "Essay Question",
+          placeholder: "Example: To what extent are human rights universal in practice?",
+          rows: 3
+        },
+        {
+          id: "politicalIssue",
+          label: "Political Issue",
+          placeholder: "What is the real political issue behind the question?",
+          rows: 3
+        },
+        {
+          id: "concept",
+          label: "Key Concept",
+          placeholder: "Example: sovereignty, legitimacy, power, human rights, development, peace, conflict.",
+          rows: 2
+        },
+        {
+          id: "claim",
+          label: "Main Claim",
+          placeholder: "Write your direct answer to the question.",
+          rows: 3
+        },
+        {
+          id: "caseStudy",
+          label: "Case Study / Example",
+          placeholder: "What specific case supports your claim?",
+          rows: 3
+        },
+        {
+          id: "evidence",
+          label: "Evidence",
+          placeholder: "What specific fact, event, policy, actor, quote, statistic, or source supports this?",
+          rows: 4
+        },
+        {
+          id: "analysis",
+          label: "Analysis",
+          placeholder: "How does this evidence prove the claim? What political mechanism is happening?",
+          rows: 4
+        },
+        {
+          id: "counterclaim",
+          label: "Counterclaim",
+          placeholder: "What would the strongest opposing argument say?",
+          rows: 4
+        },
+        {
+          id: "evaluation",
+          label: "Evaluation / Nuance",
+          placeholder: "Which side is stronger, under what conditions, and why?",
+          rows: 4
+        },
+        {
+          id: "judgement",
+          label: "Final Judgement",
+          placeholder: "Write your final refined argument in one or two sentences.",
+          rows: 3
+        }
+      ],
+      checklist: [
+        "Does the claim directly answer the question?",
+        "Is the political issue clearly identified?",
+        "Is the case study specific rather than generic?",
+        "Does the analysis connect evidence to a political concept?",
+        "Is the counterclaim strong and fair?",
+        "Does the evaluation make a clear judgement?"
+      ]
+    },
+
+    "economics": {
+      label: "Economics Evaluation Builder",
+      fields: [
+        {
+          id: "question",
+          label: "Question / Policy Issue",
+          placeholder: "Example: Evaluate the effectiveness of an indirect tax on sugary drinks.",
+          rows: 3
+        },
+        {
+          id: "concept",
+          label: "Economic Concept",
+          placeholder: "Example: market failure, externalities, elasticity, government intervention, welfare loss.",
+          rows: 2
+        },
+        {
+          id: "diagram",
+          label: "Diagram Needed",
+          placeholder: "What diagram would you use? Example: negative externality of consumption, indirect tax, subsidy.",
+          rows: 2
+        },
+        {
+          id: "shortRun",
+          label: "Short-Run Effect",
+          placeholder: "What happens immediately after the policy or economic change?",
+          rows: 3
+        },
+        {
+          id: "longRun",
+          label: "Long-Run Effect",
+          placeholder: "What happens over time? Does behavior, investment, or market adjustment change?",
+          rows: 3
+        },
+        {
+          id: "stakeholders",
+          label: "Stakeholders",
+          placeholder: "Who gains and who loses? Consumers, producers, government, workers, taxpayers, foreign firms?",
+          rows: 4
+        },
+        {
+          id: "advantages",
+          label: "Advantages",
+          placeholder: "Why might the policy work? What benefits does it create?",
+          rows: 4
+        },
+        {
+          id: "limitations",
+          label: "Limitations",
+          placeholder: "What assumptions, unintended consequences, or implementation problems limit the policy?",
+          rows: 4
+        },
+        {
+          id: "evaluation",
+          label: "Evaluation",
+          placeholder: "Under what conditions is the policy effective? What does its success depend on?",
+          rows: 4
+        },
+        {
+          id: "judgement",
+          label: "Final Judgement",
+          placeholder: "Write your final evaluative judgement.",
+          rows: 3
+        }
+      ],
+      checklist: [
+        "Is the relevant economic concept clear?",
+        "Is the diagram appropriate?",
+        "Are short-run and long-run effects separated?",
+        "Are stakeholders evaluated specifically?",
+        "Are limitations more than generic?",
+        "Does the final judgement explain conditions for success?"
+      ]
+    },
+
+    "tok": {
+      label: "TOK Argument Builder",
+      fields: [
+        {
+          id: "prompt",
+          label: "TOK Prompt",
+          placeholder: "Paste or write the TOK prompt here.",
+          rows: 3
+        },
+        {
+          id: "knowledgeQuestion",
+          label: "Knowledge Question",
+          placeholder: "What question about knowledge is underneath the prompt?",
+          rows: 3
+        },
+        {
+          id: "aok",
+          label: "Area of Knowledge",
+          placeholder: "Example: history, human sciences, natural sciences, arts, mathematics.",
+          rows: 2
+        },
+        {
+          id: "claim",
+          label: "Claim",
+          placeholder: "What is your argument about knowledge?",
+          rows: 3
+        },
+        {
+          id: "example",
+          label: "Real-World Example",
+          placeholder: "What example makes the claim concrete?",
+          rows: 4
+        },
+        {
+          id: "explanation",
+          label: "Explanation",
+          placeholder: "How does the example show something about how knowledge works?",
+          rows: 4
+        },
+        {
+          id: "counterclaim",
+          label: "Counterclaim",
+          placeholder: "What is the strongest alternative view?",
+          rows: 4
+        },
+        {
+          id: "limitation",
+          label: "Limitation",
+          placeholder: "Where does your claim stop being fully convincing?",
+          rows: 4
+        },
+        {
+          id: "implication",
+          label: "Implication",
+          placeholder: "Why does this matter for knowers or knowledge communities?",
+          rows: 4
+        },
+        {
+          id: "judgement",
+          label: "Final Insight",
+          placeholder: "What is your final nuanced insight?",
+          rows: 3
+        }
+      ],
+      checklist: [
+        "Is this about knowledge, not just the real-world example?",
+        "Is the Area of Knowledge clear?",
+        "Does the example support the knowledge claim?",
+        "Is the counterclaim genuinely different?",
+        "Does the implication explain why the argument matters?",
+        "Is the final insight nuanced?"
+      ]
+    },
+
+    "research": {
+      label: "Research Argument Planner",
+      fields: [
+        {
+          id: "topic",
+          label: "Research Topic",
+          placeholder: "What is the research about?",
+          rows: 3
+        },
+        {
+          id: "researchQuestion",
+          label: "Research Question",
+          placeholder: "Write the question the paper is trying to answer.",
+          rows: 3
+        },
+        {
+          id: "thesis",
+          label: "Working Thesis",
+          placeholder: "What is your main answer or argument?",
+          rows: 4
+        },
+        {
+          id: "literature",
+          label: "Relevant Literature / Sources",
+          placeholder: "What sources, reports, authors, datasets, or documents are central?",
+          rows: 4
+        },
+        {
+          id: "framework",
+          label: "Conceptual Framework",
+          placeholder: "What concepts or indicators will you use to analyze the issue?",
+          rows: 4
+        },
+        {
+          id: "evidence",
+          label: "Evidence Base",
+          placeholder: "What evidence supports your thesis?",
+          rows: 4
+        },
+        {
+          id: "counterargument",
+          label: "Counterargument / Alternative Interpretation",
+          placeholder: "What might another scholar, institution, or policymaker argue instead?",
+          rows: 4
+        },
+        {
+          id: "synthesis",
+          label: "Synthesis",
+          placeholder: "How do the sources agree, disagree, or complicate each other?",
+          rows: 4
+        },
+        {
+          id: "conclusion",
+          label: "Conclusion",
+          placeholder: "What final answer does the research reach?",
+          rows: 3
+        }
+      ],
+      checklist: [
+        "Is the research question narrow enough?",
+        "Does the thesis directly answer the question?",
+        "Is the framework clear?",
+        "Are sources synthesized rather than summarized one by one?",
+        "Is there an alternative interpretation?",
+        "Does the conclusion explain significance?"
+      ]
+    },
+
+    "debate": {
+      label: "Debate Case Builder",
+      fields: [
+        {
+          id: "motion",
+          label: "Motion / Proposition",
+          placeholder: "Write the debate motion or claim.",
+          rows: 3
+        },
+        {
+          id: "side",
+          label: "Side",
+          placeholder: "Are you arguing proposition, opposition, affirmative, or negative?",
+          rows: 2
+        },
+        {
+          id: "burden",
+          label: "Burden",
+          placeholder: "What does your side need to prove to win?",
+          rows: 3
+        },
+        {
+          id: "argument",
+          label: "Main Argument",
+          placeholder: "What is your strongest argument?",
+          rows: 4
+        },
+        {
+          id: "mechanism",
+          label: "Mechanism",
+          placeholder: "How exactly does your argument work in the real world?",
+          rows: 4
+        },
+        {
+          id: "impact",
+          label: "Impact",
+          placeholder: "Why does this argument matter? Who is affected? How severe is the impact?",
+          rows: 4
+        },
+        {
+          id: "example",
+          label: "Example / Evidence",
+          placeholder: "What case, statistic, event, or analogy supports the argument?",
+          rows: 4
+        },
+        {
+          id: "rebuttal",
+          label: "Expected Rebuttal",
+          placeholder: "What will the other side likely say?",
+          rows: 4
+        },
+        {
+          id: "response",
+          label: "Response to Rebuttal",
+          placeholder: "How will you answer them?",
+          rows: 4
+        },
+        {
+          id: "weighing",
+          label: "Weighing",
+          placeholder: "Why does your impact matter more than theirs?",
+          rows: 4
+        }
+      ],
+      checklist: [
+        "Is the burden clear?",
+        "Does the mechanism explain causality?",
+        "Is the impact specific and weighed?",
+        "Is the evidence concrete?",
+        "Is the rebuttal anticipated fairly?",
+        "Does the weighing explain why your side wins?"
+      ]
+    }
+  };
+
+  const storageKey = "ibArgumentLabDrafts";
+
+  const modeSelect = document.getElementById("modeSelect");
+  const dynamicFields = document.getElementById("dynamicFields");
+  const output = document.getElementById("output");
+  const draftTitle = document.getElementById("draftTitle");
+  const savedDraftsSelect = document.getElementById("savedDraftsSelect");
+
+  function getCurrentTemplate() {
+    return templates[modeSelect.value];
+  }
+
+  function renderFields() {
+    const template = getCurrentTemplate();
+
+    dynamicFields.innerHTML = "";
+
+    template.fields.forEach((field) => {
+      const label = document.createElement("label");
+      label.setAttribute("for", field.id);
+      label.textContent = field.label;
+
+      const textarea = document.createElement("textarea");
+      textarea.id = field.id;
+      textarea.rows = field.rows || 3;
+      textarea.placeholder = field.placeholder || "";
+
+      label.appendChild(textarea);
+      dynamicFields.appendChild(label);
+    });
+
+    output.textContent = "Your structured argument will appear here.";
+  }
+
+  function getFieldValues() {
+    const template = getCurrentTemplate();
+    const values = {};
+
+    template.fields.forEach((field) => {
+      values[field.id] = document.getElementById(field.id).value.trim();
+    });
+
+    return values;
+  }
+
+  function setFieldValues(values) {
+    const template = getCurrentTemplate();
+
+    template.fields.forEach((field) => {
+      const element = document.getElementById(field.id);
+      element.value = values[field.id] || "";
+    });
+  }
+
+  function formatLabel(label) {
+    return label.toUpperCase();
+  }
+
+  function generateOutline() {
+    const template = getCurrentTemplate();
+    const values = getFieldValues();
+
+    let text = `${template.label.toUpperCase()}\n\n`;
+
+    text += `Draft Title:\n${draftTitle.value.trim() || "[Untitled draft]"}\n\n`;
+
+    template.fields.forEach((field, index) => {
+      const number = String(index + 1).padStart(2, "0");
+      const value = values[field.id] || "[Not yet written]";
+
+      text += `${number}. ${formatLabel(field.label)}\n${value}\n\n`;
+    });
+
+    text += "QUALITY CHECKLIST\n";
+
+    template.checklist.forEach((item) => {
+      text += `- ${item}\n`;
+    });
+
+    output.textContent = text.trim();
+  }
+
+  function getSavedDrafts() {
+    const saved = localStorage.getItem(storageKey);
+    return saved ? JSON.parse(saved) : {};
+  }
+
+  function setSavedDrafts(drafts) {
+    localStorage.setItem(storageKey, JSON.stringify(drafts));
+  }
+
+  function refreshSavedDrafts() {
+    const drafts = getSavedDrafts();
+
+    savedDraftsSelect.innerHTML = "";
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Select a saved draft";
+    savedDraftsSelect.appendChild(defaultOption);
+
+    Object.keys(drafts).forEach((key) => {
+      const option = document.createElement("option");
+      option.value = key;
+      option.textContent = drafts[key].title || key;
+      savedDraftsSelect.appendChild(option);
+    });
+  }
+
+  function saveDraft() {
+    const title = draftTitle.value.trim();
+
+    if (!title) {
+      alert("Please add a draft title before saving.");
+      return;
+    }
+
+    const drafts = getSavedDrafts();
+    const id = `${modeSelect.value}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+    drafts[id] = {
+      title,
+      mode: modeSelect.value,
+      values: getFieldValues(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setSavedDrafts(drafts);
+    refreshSavedDrafts();
+    savedDraftsSelect.value = id;
+    generateOutline();
+
+    alert("Draft saved in this browser.");
+  }
+
+  function loadDraft() {
+    const id = savedDraftsSelect.value;
+
+    if (!id) {
+      alert("Please select a saved draft first.");
+      return;
+    }
+
+    const drafts = getSavedDrafts();
+    const draft = drafts[id];
+
+    if (!draft) {
+      alert("Draft not found.");
+      return;
+    }
+
+    modeSelect.value = draft.mode;
+    draftTitle.value = draft.title;
+
+    renderFields();
+    setFieldValues(draft.values);
+    generateOutline();
+  }
+
+  function deleteDraft() {
+    const id = savedDraftsSelect.value;
+
+    if (!id) {
+      alert("Please select a saved draft first.");
+      return;
+    }
+
+    const confirmed = confirm("Delete this saved draft?");
+    if (!confirmed) return;
+
+    const drafts = getSavedDrafts();
+    delete drafts[id];
+
+    setSavedDrafts(drafts);
+    refreshSavedDrafts();
+
+    alert("Draft deleted.");
+  }
+
+  function clearFields() {
+    const confirmed = confirm("Clear the current form?");
+    if (!confirmed) return;
+
+    draftTitle.value = "";
+    renderFields();
+  }
+
+  function copyOutput() {
+    navigator.clipboard.writeText(output.textContent).then(() => {
+      alert("Outline copied.");
+    });
+  }
+
+  function downloadOutput() {
+    const text = output.textContent;
+    const title = draftTitle.value.trim() || "ib-argument-lab-outline";
+    const safeTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${safeTitle}.txt`;
+    link.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  modeSelect.addEventListener("change", renderFields);
+  document.getElementById("generateBtn").addEventListener("click", generateOutline);
+  document.getElementById("saveBtn").addEventListener("click", saveDraft);
+  document.getElementById("loadBtn").addEventListener("click", loadDraft);
+  document.getElementById("deleteBtn").addEventListener("click", deleteDraft);
+  document.getElementById("clearBtn").addEventListener("click", clearFields);
+  document.getElementById("copyBtn").addEventListener("click", copyOutput);
+  document.getElementById("downloadBtn").addEventListener("click", downloadOutput);
+
+  renderFields();
+  refreshSavedDrafts();
+</script>
+</body>
+</html>
