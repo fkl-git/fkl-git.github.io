@@ -2592,6 +2592,10 @@ function renderChart(
   hideChartTooltip();
   syncChartButtons();
 
+  ui.chartStage.classList.add(
+    "is-rendering"
+  );
+
   const prepared =
     prepareChartCanvas();
 
@@ -2607,15 +2611,17 @@ function renderChart(
     model?.points || [];
 
   if (!model) {
-    prepared.ctx.clearRect(
-      0,
-      0,
-      prepared.width,
-      prepared.height
-    );
+  prepared.ctx.clearRect(
+    0,
+    0,
+    prepared.width,
+    prepared.height
+  );
 
-    ui.chartStage.classList
-      .remove("has-data");
+  ui.chartStage.classList.remove(
+    "has-data",
+    "is-rendering"
+  );
 
     ui.chartEmptyState.hidden =
       false;
@@ -2664,58 +2670,83 @@ function renderChart(
   );
 
   const reduceMotion =
-    window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+  window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
 
-  if (
-    !animate ||
-    reduceMotion
-  ) {
+/*
+  Draw a first frame immediately so the chart never
+  appears to wait before rendering.
+*/
+drawChart(
+  model,
+  animate && !reduceMotion
+    ? 0.08
+    : 1,
+  null
+);
+
+/*
+  Remove the entry state on the next browser frame.
+  The canvas then fades and rises into position.
+*/
+requestAnimationFrame(() => {
+  ui.chartStage.classList.remove(
+    "is-rendering"
+  );
+});
+
+if (
+  !animate ||
+  reduceMotion
+) {
+  return;
+}
+
+const started =
+  performance.now();
+
+/*
+  Previously 720 ms. A 420 ms reveal feels animated
+  without making the chart appear slow.
+*/
+const duration = 420;
+
+const frame = (time) => {
+  const elapsed =
+    time - started;
+
+  const progress =
+    Math.min(
+      1,
+      elapsed / duration
+    );
+
+  drawChart(
+    model,
+    easeOutCubic(progress),
+    null
+  );
+
+  if (progress < 1) {
+    state.chartAnimationFrame =
+      requestAnimationFrame(
+        frame
+      );
+  } else {
+    state.chartAnimationFrame =
+      null;
+
     drawChart(
       model,
       1,
       null
     );
-
-    return;
   }
+};
 
-  const started =
-    performance.now();
-
-  const duration = 720;
-
-  const frame = (time) => {
-    const elapsed =
-      time - started;
-
-    const progress =
-      Math.min(
-        1,
-        elapsed / duration
-      );
-
-    drawChart(
-      model,
-      easeOutCubic(progress),
-      null
-    );
-
-    if (progress < 1) {
-      state.chartAnimationFrame =
-        requestAnimationFrame(
-          frame
-        );
-    } else {
-      state.chartAnimationFrame =
-        null;
-    }
-  };
-
-  state.chartAnimationFrame =
-    requestAnimationFrame(frame);
-}
+state.chartAnimationFrame =
+  requestAnimationFrame(frame);
 
 function prepareChartCanvas() {
   const width =
@@ -2731,11 +2762,11 @@ function prepareChartCanvas() {
     );
 
   const pixelRatio =
-    Math.min(
-      2,
-      window.devicePixelRatio ||
-        1
-    );
+  Math.min(
+    1.5,
+    window.devicePixelRatio ||
+      1
+  );
 
   ui.marketChart.width =
     Math.round(
@@ -3399,9 +3430,17 @@ function drawChartSeries(
       ctx.lineCap = "round";
 
       ctx.shadowColor =
-        series.color;
+  series.color;
 
-      ctx.shadowBlur = 10;
+/*
+  Glow is applied only near the end of the animation.
+  Recalculating blur on every frame is unnecessarily
+  expensive on large canvases.
+*/
+ctx.shadowBlur =
+  progress >= 0.92
+    ? 8
+    : 0;
 
       if (points.length === 1) {
         if (progress > 0.35) {
