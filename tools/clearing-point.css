@@ -875,16 +875,17 @@ input:disabled {
 
 .terminal-panel,
 .data-dock {
-  position: sticky;
-  top: calc(var(--header-height) + var(--tape-height) + 14px);
-  max-height:
-    calc(
-      100vh - var(--header-height) - var(--tape-height) - 28px
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(15, 22, 31, 0.94),
+      rgba(9, 14, 20, 0.93)
     );
-  overflow-y: auto;
-  transition:
-    opacity var(--transition-medium),
-    transform var(--transition-medium);
+  box-shadow: var(--shadow-panel);
 }
 
 .terminal-panel::before,
@@ -992,10 +993,13 @@ input:disabled {
 ========================================================= */
 
 .data-dock {
-  position: relative;
-  top: auto;
-  max-height: none;
-  overflow: visible;
+  position: sticky;
+  top: calc(var(--header-height) + var(--tape-height) + 14px);
+  max-height:
+    calc(
+      100vh - var(--header-height) - var(--tape-height) - 28px
+    );
+  overflow-y: auto;
   transition:
     opacity var(--transition-medium),
     transform var(--transition-medium);
@@ -1726,6 +1730,8 @@ select {
 .intelligence-rail {
   position: sticky;
   top: calc(var(--header-height) + var(--tape-height) + 14px);
+  align-self: start;
+  min-width: 0;
   max-height:
     calc(
       100vh - var(--header-height) - var(--tape-height) - 28px
@@ -2684,10 +2690,12 @@ tbody tr:hover {
   }
 
   .data-dock,
-  .intelligence-rail {
-    position: static;
-    max-height: none;
-  }
+.intelligence-rail {
+  position: static;
+  top: auto;
+  max-height: none;
+  overflow: visible;
+}
 
   .market-overview {
     grid-template-columns: 1fr;
@@ -2784,6 +2792,7 @@ tbody tr:hover {
     z-index: 100;
     width: min(360px, 91vw);
     max-height: none;
+    overflow-y: auto;
     border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
     transform: translateX(-105%);
   }
