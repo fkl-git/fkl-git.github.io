@@ -7,8 +7,10 @@
 
   <meta
     name="description"
-    content="FISCAL//COMMAND is an interactive debt-dynamics and fiscal-risk modelling tool."
+    content="FISCAL//COMMAND is an interactive debt-dynamics and fiscal-risk modelling tool by Josh Michael Luistro."
   >
+
+  <meta name="author" content="Josh Michael Luistro">
 
   <title>FISCAL//COMMAND | Debt Dynamics Lab</title>
 
@@ -17,9 +19,1531 @@
 </head>
 
 <body>
-  <main id="fiscal-command">
-    <h1>FISCAL//COMMAND</h1>
-    <p>Debt Dynamics Lab — system initialization.</p>
-  </main>
+  <a class="skip-link" href="#model-main">
+    Skip to model
+  </a>
+
+  <div id="fiscal-command" class="app-shell">
+    <noscript>
+      <div class="system-warning">
+        JavaScript is required to run the debt-dynamics model.
+      </div>
+    </noscript>
+
+    <!-- =====================================================
+         TERMINAL HEADER
+    ====================================================== -->
+
+    <header class="terminal-header">
+      <div class="brand-block">
+        <a class="brand-link" href="../index.html">
+          <span class="brand-wordmark">
+            FISCAL<span aria-hidden="true">//</span>COMMAND
+          </span>
+
+          <span class="brand-subtitle">
+            Debt Dynamics Lab
+          </span>
+        </a>
+      </div>
+
+      <div class="system-status" aria-label="System status">
+        <span class="status-dot" aria-hidden="true"></span>
+
+        <span class="status-label">
+          Model Status
+        </span>
+
+        <output id="header-model-status" class="status-value">
+          Awaiting run
+        </output>
+      </div>
+
+      <div class="header-actions" aria-label="Model actions">
+        <button
+          id="save-scenario-button"
+          class="terminal-button"
+          type="button"
+        >
+          Save Scenario
+        </button>
+
+        <button
+          id="load-scenario-button"
+          class="terminal-button"
+          type="button"
+          aria-haspopup="dialog"
+          aria-controls="saved-scenarios-dialog"
+        >
+          Load
+        </button>
+
+        <button
+          id="export-csv-button"
+          class="terminal-button"
+          type="button"
+        >
+          Export CSV
+        </button>
+
+        <button
+          id="print-report-button"
+          class="terminal-button"
+          type="button"
+        >
+          Print Report
+        </button>
+
+        <button
+          id="reset-model-button"
+          class="terminal-button terminal-button-danger"
+          type="button"
+        >
+          Reset
+        </button>
+
+        <button
+          id="contrast-toggle"
+          class="terminal-button"
+          type="button"
+          aria-pressed="false"
+        >
+          High Contrast
+        </button>
+
+        <a class="terminal-button site-return-link" href="../projects.html">
+          Return to Work
+        </a>
+      </div>
+    </header>
+
+    <!-- =====================================================
+         LIVE MODEL TICKER
+    ====================================================== -->
+
+    <section class="model-ticker" aria-label="Current model summary">
+      <div class="ticker-item">
+        <span class="ticker-label">Starting Debt</span>
+        <output id="ticker-starting-debt" class="ticker-value">—</output>
+      </div>
+
+      <div class="ticker-divider" aria-hidden="true"></div>
+
+      <div class="ticker-item">
+        <span class="ticker-label">Final Debt</span>
+        <output id="ticker-final-debt" class="ticker-value">—</output>
+      </div>
+
+      <div class="ticker-divider" aria-hidden="true"></div>
+
+      <div class="ticker-item">
+        <span class="ticker-label">Nominal Growth</span>
+        <output id="ticker-nominal-growth" class="ticker-value">—</output>
+      </div>
+
+      <div class="ticker-divider" aria-hidden="true"></div>
+
+      <div class="ticker-item">
+        <span class="ticker-label">Effective Rate</span>
+        <output id="ticker-interest-rate" class="ticker-value">—</output>
+      </div>
+
+      <div class="ticker-divider" aria-hidden="true"></div>
+
+      <div class="ticker-item">
+        <span class="ticker-label">Primary Balance</span>
+        <output id="ticker-primary-balance" class="ticker-value">—</output>
+      </div>
+
+      <div class="ticker-divider" aria-hidden="true"></div>
+
+      <div class="ticker-item ticker-item-status">
+        <span class="ticker-label">Trajectory</span>
+        <output id="ticker-trajectory" class="ticker-value">
+          Not calculated
+        </output>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         PRIMARY DASHBOARD
+    ====================================================== -->
+
+    <main id="model-main" class="dashboard-grid">
+      <!-- ===================================================
+           LEFT PANEL: MODEL CONTROLS
+      ==================================================== -->
+
+      <aside class="panel input-panel" aria-labelledby="inputs-heading">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Control Module</p>
+            <h1 id="inputs-heading">Model Inputs</h1>
+          </div>
+
+          <span class="panel-code" aria-hidden="true">
+            INPUT//01
+          </span>
+        </div>
+
+        <form id="model-form" novalidate>
+          <fieldset class="control-group">
+            <legend>Projection Setup</legend>
+
+            <div class="field-grid">
+              <div class="form-field">
+                <label for="base-year">
+                  Base year
+                </label>
+
+                <input
+                  id="base-year"
+                  name="baseYear"
+                  type="number"
+                  min="1900"
+                  max="2200"
+                  step="1"
+                  value="2026"
+                  inputmode="numeric"
+                >
+              </div>
+
+              <div class="form-field">
+                <label for="projection-horizon">
+                  Projection horizon
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="projection-horizon"
+                    name="projectionHorizon"
+                    type="number"
+                    min="5"
+                    max="20"
+                    step="1"
+                    value="10"
+                    inputmode="numeric"
+                  >
+
+                  <span class="input-unit">years</span>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="starting-debt">
+                  Starting debt-to-GDP
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="starting-debt"
+                    name="startingDebt"
+                    type="number"
+                    min="0"
+                    max="500"
+                    step="0.1"
+                    value="61.3"
+                    inputmode="decimal"
+                  >
+
+                  <span class="input-unit">%</span>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="target-debt">
+                  Target debt-to-GDP
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="target-debt"
+                    name="targetDebt"
+                    type="number"
+                    min="0"
+                    max="500"
+                    step="0.1"
+                    value="60.0"
+                    inputmode="decimal"
+                  >
+
+                  <span class="input-unit">%</span>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="control-group">
+            <legend>Growth Assumptions</legend>
+
+            <div
+              class="segmented-control"
+              role="radiogroup"
+              aria-label="Nominal growth calculation method"
+            >
+              <label>
+                <input
+                  type="radio"
+                  name="growthMode"
+                  value="components"
+                  checked
+                >
+
+                <span>Real growth + inflation</span>
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  name="growthMode"
+                  value="direct"
+                >
+
+                <span>Direct nominal growth</span>
+              </label>
+            </div>
+
+            <div id="growth-components-fields" class="field-grid">
+              <div class="form-field">
+                <label for="real-growth">
+                  Real GDP growth
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="real-growth"
+                    name="realGrowth"
+                    type="number"
+                    min="-30"
+                    max="30"
+                    step="0.1"
+                    value="5.8"
+                    inputmode="decimal"
+                  >
+
+                  <span class="input-unit">%</span>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="inflation-rate">
+                  GDP deflator / inflation
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="inflation-rate"
+                    name="inflationRate"
+                    type="number"
+                    min="-20"
+                    max="100"
+                    step="0.1"
+                    value="3.0"
+                    inputmode="decimal"
+                  >
+
+                  <span class="input-unit">%</span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="direct-nominal-growth-field"
+              class="form-field"
+              hidden
+            >
+              <label for="direct-nominal-growth">
+                Nominal GDP growth
+              </label>
+
+              <div class="input-with-unit">
+                <input
+                  id="direct-nominal-growth"
+                  name="directNominalGrowth"
+                  type="number"
+                  min="-50"
+                  max="150"
+                  step="0.1"
+                  value="9.0"
+                  inputmode="decimal"
+                  disabled
+                >
+
+                <span class="input-unit">%</span>
+              </div>
+            </div>
+
+            <div class="calculated-field">
+              <span>Calculated nominal growth</span>
+
+              <output id="calculated-nominal-growth">
+                8.97%
+              </output>
+            </div>
+          </fieldset>
+
+          <fieldset class="control-group">
+            <legend>Fiscal Assumptions</legend>
+
+            <div class="field-grid">
+              <div class="form-field">
+                <label for="effective-interest-rate">
+                  Effective nominal interest rate
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="effective-interest-rate"
+                    name="effectiveInterestRate"
+                    type="number"
+                    min="-10"
+                    max="100"
+                    step="0.1"
+                    value="6.1"
+                    inputmode="decimal"
+                  >
+
+                  <span class="input-unit">%</span>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="primary-balance">
+                  Primary balance
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="primary-balance"
+                    name="primaryBalance"
+                    type="number"
+                    min="-50"
+                    max="50"
+                    step="0.1"
+                    value="-1.2"
+                    inputmode="decimal"
+                    aria-describedby="primary-balance-help"
+                  >
+
+                  <span class="input-unit">% GDP</span>
+                </div>
+
+                <small id="primary-balance-help">
+                  Surplus is positive. Deficit is negative.
+                </small>
+              </div>
+
+              <div class="form-field">
+                <label for="revenue-ratio">
+                  Government revenue
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="revenue-ratio"
+                    name="revenueRatio"
+                    type="number"
+                    min="0.1"
+                    max="100"
+                    step="0.1"
+                    value="16.0"
+                    inputmode="decimal"
+                  >
+
+                  <span class="input-unit">% GDP</span>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="annual-stock-flow">
+                  Annual stock-flow adjustment
+                </label>
+
+                <div class="input-with-unit">
+                  <input
+                    id="annual-stock-flow"
+                    name="annualStockFlow"
+                    type="number"
+                    min="-20"
+                    max="20"
+                    step="0.1"
+                    value="0"
+                    inputmode="decimal"
+                  >
+
+                  <span class="input-unit">% GDP</span>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <details class="advanced-controls">
+            <summary>
+              Advanced Scenario Controls
+            </summary>
+
+            <div class="advanced-content">
+              <fieldset class="control-group">
+                <legend>Favorable Scenario Adjustments</legend>
+
+                <p class="control-description">
+                  These values are applied relative to the baseline assumptions.
+                </p>
+
+                <div class="field-grid">
+                  <div class="form-field">
+                    <label for="favorable-growth-adjustment">
+                      Growth adjustment
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="favorable-growth-adjustment"
+                        name="favorableGrowthAdjustment"
+                        type="number"
+                        min="-20"
+                        max="20"
+                        step="0.1"
+                        value="1.0"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">pp</span>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="favorable-rate-adjustment">
+                      Interest-rate adjustment
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="favorable-rate-adjustment"
+                        name="favorableRateAdjustment"
+                        type="number"
+                        min="-20"
+                        max="20"
+                        step="0.1"
+                        value="-0.5"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">pp</span>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="favorable-primary-adjustment">
+                      Primary-balance adjustment
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="favorable-primary-adjustment"
+                        name="favorablePrimaryAdjustment"
+                        type="number"
+                        min="-20"
+                        max="20"
+                        step="0.1"
+                        value="1.0"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">pp</span>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset class="control-group">
+                <legend>Adverse Stress Scenario</legend>
+
+                <p class="control-description">
+                  Stress adjustments apply during the selected shock window.
+                </p>
+
+                <div class="field-grid">
+                  <div class="form-field">
+                    <label for="adverse-growth-shock">
+                      Growth shock
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="adverse-growth-shock"
+                        name="adverseGrowthShock"
+                        type="number"
+                        min="-50"
+                        max="50"
+                        step="0.1"
+                        value="-2.0"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">pp</span>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="adverse-rate-shock">
+                      Interest-rate shock
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="adverse-rate-shock"
+                        name="adverseRateShock"
+                        type="number"
+                        min="-20"
+                        max="50"
+                        step="0.1"
+                        value="1.5"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">pp</span>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="adverse-primary-shock">
+                      Primary-balance shock
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="adverse-primary-shock"
+                        name="adversePrimaryShock"
+                        type="number"
+                        min="-50"
+                        max="50"
+                        step="0.1"
+                        value="-1.5"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">pp</span>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="adverse-stock-flow-shock">
+                      One-time debt shock
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="adverse-stock-flow-shock"
+                        name="adverseStockFlowShock"
+                        type="number"
+                        min="-50"
+                        max="100"
+                        step="0.1"
+                        value="2.0"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">% GDP</span>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="shock-start-year">
+                      Shock begins in projection year
+                    </label>
+
+                    <input
+                      id="shock-start-year"
+                      name="shockStartYear"
+                      type="number"
+                      min="1"
+                      max="20"
+                      step="1"
+                      value="2"
+                      inputmode="numeric"
+                    >
+                  </div>
+
+                  <div class="form-field">
+                    <label for="shock-duration">
+                      Shock duration
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="shock-duration"
+                        name="shockDuration"
+                        type="number"
+                        min="1"
+                        max="20"
+                        step="1"
+                        value="2"
+                        inputmode="numeric"
+                      >
+
+                      <span class="input-unit">years</span>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset class="control-group">
+                <legend>Foreign-Currency Exposure</legend>
+
+                <p class="control-description">
+                  Optional approximation of the direct debt-ratio effect from
+                  exchange-rate depreciation.
+                </p>
+
+                <div class="field-grid">
+                  <div class="form-field">
+                    <label for="foreign-currency-share">
+                      Foreign-currency debt share
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="foreign-currency-share"
+                        name="foreignCurrencyShare"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value="0"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">%</span>
+                    </div>
+                  </div>
+
+                  <div class="form-field">
+                    <label for="depreciation-shock">
+                      Exchange-rate depreciation
+                    </label>
+
+                    <div class="input-with-unit">
+                      <input
+                        id="depreciation-shock"
+                        name="depreciationShock"
+                        type="number"
+                        min="-100"
+                        max="500"
+                        step="0.1"
+                        value="0"
+                        inputmode="decimal"
+                      >
+
+                      <span class="input-unit">%</span>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          </details>
+
+          <div
+            id="validation-summary"
+            class="validation-summary"
+            role="alert"
+            hidden
+          >
+            <p>Review the following inputs:</p>
+            <ul id="validation-errors"></ul>
+          </div>
+
+          <div class="model-form-actions">
+            <button
+              id="run-model-button"
+              class="primary-command"
+              type="button"
+            >
+              Run Model
+            </button>
+
+            <button
+              id="restore-defaults-button"
+              class="secondary-command"
+              type="reset"
+            >
+              Restore Defaults
+            </button>
+          </div>
+        </form>
+      </aside>
+
+      <!-- ===================================================
+           CENTER PANEL: DEBT TRAJECTORY
+      ==================================================== -->
+
+      <section class="panel chart-panel" aria-labelledby="chart-heading">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Trajectory Monitor</p>
+            <h2 id="chart-heading">Debt-to-GDP Projection</h2>
+          </div>
+
+          <span class="panel-code" aria-hidden="true">
+            MODEL//02
+          </span>
+        </div>
+
+        <div class="chart-toolbar">
+          <div
+            class="scenario-tabs"
+            role="group"
+            aria-label="Select active scenario"
+          >
+            <button
+              class="scenario-tab"
+              type="button"
+              data-scenario="favorable"
+              aria-pressed="false"
+            >
+              Favorable
+            </button>
+
+            <button
+              class="scenario-tab active"
+              type="button"
+              data-scenario="baseline"
+              aria-pressed="true"
+            >
+              Baseline
+            </button>
+
+            <button
+              class="scenario-tab"
+              type="button"
+              data-scenario="adverse"
+              aria-pressed="false"
+            >
+              Adverse
+            </button>
+          </div>
+
+          <label class="compact-select" for="chart-measure">
+            <span>Display</span>
+
+            <select id="chart-measure" name="chartMeasure">
+              <option value="debt" selected>Debt-to-GDP</option>
+              <option value="interest-gdp">Interest / GDP</option>
+              <option value="interest-revenue">Interest / Revenue</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="chart-shell">
+          <svg
+            id="debt-chart"
+            class="debt-chart"
+            viewBox="0 0 1000 560"
+            role="img"
+            aria-labelledby="debt-chart-title debt-chart-description"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <title id="debt-chart-title">
+              Debt-dynamics scenario chart
+            </title>
+
+            <desc id="debt-chart-description">
+              Interactive projection chart comparing favorable, baseline,
+              and adverse debt-to-GDP paths.
+            </desc>
+
+            <defs>
+              <linearGradient
+                id="baseline-area-gradient"
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="1"
+              >
+                <stop offset="0%" stop-color="currentColor" stop-opacity="0.28"></stop>
+                <stop offset="100%" stop-color="currentColor" stop-opacity="0"></stop>
+              </linearGradient>
+
+              <filter id="line-glow">
+                <feGaussianBlur stdDeviation="4" result="blur"></feGaussianBlur>
+
+                <feMerge>
+                  <feMergeNode in="blur"></feMergeNode>
+                  <feMergeNode in="SourceGraphic"></feMergeNode>
+                </feMerge>
+              </filter>
+            </defs>
+
+            <rect
+              class="chart-background"
+              x="0"
+              y="0"
+              width="1000"
+              height="560"
+              rx="18"
+            ></rect>
+
+            <g id="chart-grid" class="chart-grid" aria-hidden="true"></g>
+
+            <g id="chart-y-axis" class="chart-axis" aria-hidden="true"></g>
+
+            <g id="chart-x-axis" class="chart-axis" aria-hidden="true"></g>
+
+            <g id="target-line-group" class="target-line-group">
+              <line
+                id="target-line"
+                x1="80"
+                x2="960"
+                y1="0"
+                y2="0"
+              ></line>
+
+              <text id="target-line-label" x="88" y="0">
+                Target
+              </text>
+            </g>
+
+            <path
+              id="favorable-area-path"
+              class="scenario-area scenario-area-favorable"
+              d=""
+            ></path>
+
+            <path
+              id="baseline-area-path"
+              class="scenario-area scenario-area-baseline"
+              d=""
+            ></path>
+
+            <path
+              id="adverse-area-path"
+              class="scenario-area scenario-area-adverse"
+              d=""
+            ></path>
+
+            <path
+              id="favorable-line-path"
+              class="scenario-line scenario-line-favorable"
+              d=""
+            ></path>
+
+            <path
+              id="baseline-line-path"
+              class="scenario-line scenario-line-baseline"
+              d=""
+              filter="url(#line-glow)"
+            ></path>
+
+            <path
+              id="adverse-line-path"
+              class="scenario-line scenario-line-adverse"
+              d=""
+            ></path>
+
+            <g
+              id="chart-data-markers"
+              class="chart-data-markers"
+            ></g>
+
+            <g
+              id="chart-annotations"
+              class="chart-annotations"
+            ></g>
+          </svg>
+
+          <div id="chart-placeholder" class="chart-placeholder">
+            <p class="chart-placeholder-code">MODEL NOT YET RUN</p>
+            <p>
+              Enter assumptions and run the model to generate the scenario paths.
+            </p>
+          </div>
+
+          <div
+            id="chart-tooltip"
+            class="chart-tooltip"
+            role="status"
+            hidden
+          ></div>
+        </div>
+
+        <div class="chart-legend" aria-label="Chart legend">
+          <span class="legend-item">
+            <span class="legend-line favorable" aria-hidden="true"></span>
+            Favorable
+          </span>
+
+          <span class="legend-item">
+            <span class="legend-line baseline" aria-hidden="true"></span>
+            Baseline
+          </span>
+
+          <span class="legend-item">
+            <span class="legend-line adverse" aria-hidden="true"></span>
+            Adverse
+          </span>
+
+          <span class="legend-item">
+            <span class="legend-line target" aria-hidden="true"></span>
+            Target
+          </span>
+        </div>
+      </section>
+
+      <!-- ===================================================
+           RIGHT PANEL: FISCAL INTELLIGENCE
+      ==================================================== -->
+
+      <aside
+        class="panel intelligence-panel"
+        aria-labelledby="intelligence-heading"
+      >
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Model Intelligence</p>
+            <h2 id="intelligence-heading">Fiscal Signals</h2>
+          </div>
+
+          <span class="panel-code" aria-hidden="true">
+            SIGNAL//03
+          </span>
+        </div>
+
+        <div class="primary-signal-card">
+          <p class="signal-label">Trajectory Signal</p>
+
+          <output id="trajectory-signal" class="signal-value">
+            Not calculated
+          </output>
+
+          <p id="trajectory-description" class="signal-description">
+            Run the model to evaluate the projected debt path.
+          </p>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card">
+            <p class="metric-label">Ending Debt</p>
+            <output id="metric-ending-debt" class="metric-value">—</output>
+            <p class="metric-unit">% GDP</p>
+          </article>
+
+          <article class="metric-card">
+            <p class="metric-label">Peak Debt</p>
+            <output id="metric-peak-debt" class="metric-value">—</output>
+            <p class="metric-unit">% GDP</p>
+          </article>
+
+          <article class="metric-card">
+            <p class="metric-label">Debt Change</p>
+            <output id="metric-debt-change" class="metric-value">—</output>
+            <p class="metric-unit">percentage points</p>
+          </article>
+
+          <article class="metric-card">
+            <p class="metric-label">Stabilizing PB</p>
+            <output
+              id="metric-stabilizing-primary"
+              class="metric-value"
+            >
+              —
+            </output>
+            <p class="metric-unit">% GDP</p>
+          </article>
+
+          <article class="metric-card">
+            <p class="metric-label">Primary-Balance Gap</p>
+            <output
+              id="metric-primary-gap"
+              class="metric-value"
+            >
+              —
+            </output>
+            <p class="metric-unit">percentage points</p>
+          </article>
+
+          <article class="metric-card">
+            <p class="metric-label">Target-Reaching PB</p>
+            <output
+              id="metric-target-primary"
+              class="metric-value"
+            >
+              —
+            </output>
+            <p class="metric-unit">% GDP</p>
+          </article>
+
+          <article class="metric-card">
+            <p class="metric-label">Interest Burden</p>
+            <output
+              id="metric-interest-gdp"
+              class="metric-value"
+            >
+              —
+            </output>
+            <p class="metric-unit">% GDP</p>
+          </article>
+
+          <article class="metric-card">
+            <p class="metric-label">Interest / Revenue</p>
+            <output
+              id="metric-interest-revenue"
+              class="metric-value"
+            >
+              —
+            </output>
+            <p class="metric-unit">% revenue</p>
+          </article>
+        </div>
+
+        <section class="risk-flags" aria-labelledby="risk-flags-heading">
+          <div class="subpanel-header">
+            <h3 id="risk-flags-heading">Model Flags</h3>
+            <span aria-hidden="true">AUTO</span>
+          </div>
+
+          <ul id="risk-flags-list">
+            <li class="neutral-flag">
+              No model flags generated.
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+
+    <!-- =====================================================
+         DRIVER ANALYSIS
+    ====================================================== -->
+
+    <section class="lower-dashboard">
+      <article class="panel driver-panel" aria-labelledby="driver-heading">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Diagnostic Engine</p>
+            <h2 id="driver-heading">Driver Analysis</h2>
+          </div>
+
+          <span class="panel-code" aria-hidden="true">
+            DIAG//04
+          </span>
+        </div>
+
+        <p id="driver-analysis-summary" class="driver-summary">
+          Run the model to identify whether growth, interest costs,
+          the primary balance, or stock-flow adjustments are driving
+          the projected debt path.
+        </p>
+
+        <div class="driver-grid">
+          <article class="driver-card">
+            <p class="driver-label">Interest-Growth Differential</p>
+            <output id="driver-interest-growth">—</output>
+            <p id="driver-interest-growth-note">
+              No assessment available.
+            </p>
+          </article>
+
+          <article class="driver-card">
+            <p class="driver-label">Primary Balance Position</p>
+            <output id="driver-primary-position">—</output>
+            <p id="driver-primary-position-note">
+              No assessment available.
+            </p>
+          </article>
+
+          <article class="driver-card">
+            <p class="driver-label">Shock Contribution</p>
+            <output id="driver-shock-contribution">—</output>
+            <p id="driver-shock-contribution-note">
+              No assessment available.
+            </p>
+          </article>
+        </div>
+      </article>
+
+      <!-- ===================================================
+           SCENARIO COMPARISON
+      ==================================================== -->
+
+      <section
+        class="panel comparison-panel"
+        aria-labelledby="comparison-heading"
+      >
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Scenario Matrix</p>
+            <h2 id="comparison-heading">Scenario Comparison</h2>
+          </div>
+
+          <span class="panel-code" aria-hidden="true">
+            MATRIX//05
+          </span>
+        </div>
+
+        <div class="scenario-comparison-grid">
+          <article
+            class="scenario-summary-card favorable-card"
+            data-scenario-card="favorable"
+          >
+            <div class="scenario-card-header">
+              <h3>Favorable</h3>
+              <span class="scenario-indicator" aria-hidden="true"></span>
+            </div>
+
+            <dl>
+              <div>
+                <dt>Final debt</dt>
+                <dd>
+                  <output id="favorable-final-debt">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Peak debt</dt>
+                <dd>
+                  <output id="favorable-peak-debt">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Stabilizing PB</dt>
+                <dd>
+                  <output id="favorable-stabilizing-primary">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Interest / revenue</dt>
+                <dd>
+                  <output id="favorable-interest-revenue">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Trajectory</dt>
+                <dd>
+                  <output id="favorable-trajectory">—</output>
+                </dd>
+              </div>
+            </dl>
+          </article>
+
+          <article
+            class="scenario-summary-card baseline-card"
+            data-scenario-card="baseline"
+          >
+            <div class="scenario-card-header">
+              <h3>Baseline</h3>
+              <span class="scenario-indicator" aria-hidden="true"></span>
+            </div>
+
+            <dl>
+              <div>
+                <dt>Final debt</dt>
+                <dd>
+                  <output id="baseline-final-debt">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Peak debt</dt>
+                <dd>
+                  <output id="baseline-peak-debt">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Stabilizing PB</dt>
+                <dd>
+                  <output id="baseline-stabilizing-primary">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Interest / revenue</dt>
+                <dd>
+                  <output id="baseline-interest-revenue">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Trajectory</dt>
+                <dd>
+                  <output id="baseline-trajectory">—</output>
+                </dd>
+              </div>
+            </dl>
+          </article>
+
+          <article
+            class="scenario-summary-card adverse-card"
+            data-scenario-card="adverse"
+          >
+            <div class="scenario-card-header">
+              <h3>Adverse</h3>
+              <span class="scenario-indicator" aria-hidden="true"></span>
+            </div>
+
+            <dl>
+              <div>
+                <dt>Final debt</dt>
+                <dd>
+                  <output id="adverse-final-debt">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Peak debt</dt>
+                <dd>
+                  <output id="adverse-peak-debt">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Stabilizing PB</dt>
+                <dd>
+                  <output id="adverse-stabilizing-primary">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Interest / revenue</dt>
+                <dd>
+                  <output id="adverse-interest-revenue">—</output>
+                </dd>
+              </div>
+
+              <div>
+                <dt>Trajectory</dt>
+                <dd>
+                  <output id="adverse-trajectory">—</output>
+                </dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+      </section>
+    </section>
+
+    <!-- =====================================================
+         ANNUAL PROJECTION TABLE
+    ====================================================== -->
+
+    <section class="panel projection-table-panel">
+      <div class="panel-header">
+        <div>
+          <p class="panel-kicker">Annual Data Stream</p>
+          <h2>Projection Table</h2>
+        </div>
+
+        <div class="table-controls">
+          <label for="table-scenario">
+            Scenario
+          </label>
+
+          <select id="table-scenario" name="tableScenario">
+            <option value="favorable">Favorable</option>
+            <option value="baseline" selected>Baseline</option>
+            <option value="adverse">Adverse</option>
+          </select>
+
+          <span class="panel-code" aria-hidden="true">
+            TABLE//06
+          </span>
+        </div>
+      </div>
+
+      <div class="table-wrapper" tabindex="0">
+        <table id="projection-table">
+          <caption>
+            Annual debt-dynamics projection for the selected scenario
+          </caption>
+
+          <thead>
+            <tr>
+              <th scope="col">Year</th>
+              <th scope="col">Opening Debt</th>
+              <th scope="col">Nominal Growth</th>
+              <th scope="col">Effective Rate</th>
+              <th scope="col">Primary Balance</th>
+              <th scope="col">Stock-Flow Adjustment</th>
+              <th scope="col">Interest / GDP</th>
+              <th scope="col">Closing Debt</th>
+            </tr>
+          </thead>
+
+          <tbody id="projection-table-body">
+            <tr class="empty-table-row">
+              <td colspan="8">
+                Run the model to populate the annual projection.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =====================================================
+         METHODOLOGY
+    ====================================================== -->
+
+    <section class="panel methodology-panel">
+      <details id="methodology-drawer">
+        <summary>
+          Methodology, Equations, and Limitations
+        </summary>
+
+        <div class="methodology-content">
+          <section>
+            <h2>Core Debt-Dynamics Equation</h2>
+
+            <p>
+              The model projects the debt-to-GDP ratio using:
+            </p>
+
+            <p class="equation">
+              d<sub>t</sub> =
+              ((1 + i<sub>t</sub>) / (1 + g<sub>t</sub>))
+              × d<sub>t−1</sub>
+              − pb<sub>t</sub>
+              + s<sub>t</sub>
+            </p>
+
+            <ul>
+              <li>
+                <strong>d</strong> is the debt-to-GDP ratio.
+              </li>
+
+              <li>
+                <strong>i</strong> is the effective nominal interest rate.
+              </li>
+
+              <li>
+                <strong>g</strong> is nominal GDP growth.
+              </li>
+
+              <li>
+                <strong>pb</strong> is the primary balance, with surplus positive.
+              </li>
+
+              <li>
+                <strong>s</strong> is the stock-flow adjustment.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>Nominal Growth</h2>
+
+            <p>
+              When growth is entered using real GDP growth and inflation,
+              nominal growth is calculated as:
+            </p>
+
+            <p class="equation">
+              1 + g<sub>n</sub> =
+              (1 + g<sub>r</sub>)
+              × (1 + π)
+            </p>
+          </section>
+
+          <section>
+            <h2>Scenario Interpretation</h2>
+
+            <p>
+              The favorable and adverse paths are mechanical scenarios based on
+              visible adjustments to the baseline assumptions. They are not
+              probability-weighted forecasts.
+            </p>
+          </section>
+
+          <section>
+            <h2>Limitations</h2>
+
+            <ul>
+              <li>
+                The model uses simplified annual assumptions.
+              </li>
+
+              <li>
+                It does not model the full maturity structure of government debt.
+              </li>
+
+              <li>
+                It does not estimate market access or rollover risk directly.
+              </li>
+
+              <li>
+                It does not constitute an official debt-sustainability analysis.
+              </li>
+
+              <li>
+                Results depend entirely on the assumptions entered by the user.
+              </li>
+            </ul>
+          </section>
+
+          <p class="model-disclaimer">
+            This model is an educational and analytical tool. It does not
+            constitute an official fiscal forecast, debt-sustainability
+            assessment, credit opinion, investment recommendation, or
+            financial advice.
+          </p>
+        </div>
+      </details>
+    </section>
+
+    <!-- =====================================================
+         APP FOOTER
+    ====================================================== -->
+
+    <footer class="terminal-footer">
+      <div>
+        <span>FISCAL//COMMAND</span>
+        <span aria-hidden="true">·</span>
+        <span>Debt Dynamics Lab</span>
+      </div>
+
+      <div>
+        <span>Built by Josh Michael Luistro</span>
+        <span aria-hidden="true">·</span>
+        <span id="model-version">Core Model v1.0</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- =======================================================
+       SAVED SCENARIOS DIALOG
+  ======================================================== -->
+
+  <dialog id="saved-scenarios-dialog">
+    <div class="dialog-header">
+      <div>
+        <p class="panel-kicker">Local Storage</p>
+        <h2>Saved Scenarios</h2>
+      </div>
+
+      <button
+        id="close-scenarios-dialog"
+        type="button"
+        aria-label="Close saved scenarios"
+      >
+        ×
+      </button>
+    </div>
+
+    <div id="saved-scenarios-list">
+      <p class="empty-state">
+        No scenarios have been saved in this browser.
+      </p>
+    </div>
+  </dialog>
+
+  <!-- Screen-reader updates -->
+  <div
+    id="model-announcer"
+    class="visually-hidden"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
 </body>
 </html>
