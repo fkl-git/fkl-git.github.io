@@ -1,0 +1,21 @@
+/* FISCAL//COMMAND — interface styles will be built here. */
+
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #050608;
+  color: #f4f4f5;
+  font-family: Arial, sans-serif;
+}
+
+#fiscal-command {
+  padding: 2rem;
+}
