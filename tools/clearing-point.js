@@ -46,7 +46,15 @@ document.addEventListener("DOMContentLoaded", () => {
     sortKey: "auction_date",
     sortDirection: "desc",
     tapeIndex: 0,
-    confirmationAction: null,
+
+chartMetric: "accepted_yield",
+chartTenor: "all",
+chartModel: null,
+chartPoints: [],
+chartHoverPoint: null,
+chartAnimationFrame: null,
+
+confirmationAction: null,
   };
 
   const ui = {
@@ -141,7 +149,12 @@ document.addEventListener("DOMContentLoaded", () => {
     visibleRecordCount: $("visibleRecordCount"),
     tableSortSummary: $("tableSortSummary"),
 
-    chartEmptyState: $("chartEmptyState"),
+    chartTenorSelect: $("chartTenorSelect"),
+marketChart: $("marketChart"),
+chartStage: $("chartStage"),
+chartTooltip: $("chartTooltip"),
+chartLegend: $("chartLegend"),
+chartEmptyState: $("chartEmptyState"),
 
     pasteCsvDialog: $("pasteCsvDialog"),
     pastedCsvInput: $("pastedCsvInput"),
@@ -246,14 +259,13 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     ui.auctionFlowRecordSelect.addEventListener(
-      "change",
-      () => {
-        state.selectedId =
-          ui.auctionFlowRecordSelect.value;
-
-        renderSelected();
-      }
+  "change",
+  () => {
+    selectRecord(
+      ui.auctionFlowRecordSelect.value
     );
+  }
+);
 
     ui.auctionTableSearch.addEventListener("input", () => {
       state.search = ui.auctionTableSearch.value
@@ -367,14 +379,45 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    ui.chartButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        toast(
-          "Interactive charts are added in Pass 4.",
-          "warning"
-        );
-      });
-    });
+   ui.chartButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    setChartMetric(
+      button.dataset.metric
+    );
+  });
+});
+
+ui.chartTenorSelect.addEventListener(
+  "change",
+  () => {
+    state.chartTenor =
+      ui.chartTenorSelect.value;
+
+    renderChart(true);
+  }
+);
+
+ui.marketChart.addEventListener(
+  "pointermove",
+  handleChartPointer
+);
+
+ui.marketChart.addEventListener(
+  "pointerleave",
+  clearChartHover
+);
+
+ui.marketChart.addEventListener(
+  "click",
+  selectChartPoint
+);
+
+window.addEventListener(
+  "resize",
+  debounce(() => {
+    renderChart(false);
+  }, 140)
+);
 
     [
       ui.pasteCsvDialog,
@@ -1046,10 +1089,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function populateControls() {
-    populateTenorFilter();
-    populateFlowSelect();
-    setInputsEnabled(true);
-  }
+  populateTenorFilter();
+  populateFlowSelect();
+  populateChartTenorSelect();
+  setInputsEnabled(true);
+}
 
   function populateTenorFilter() {
     const current =
@@ -1154,6 +1198,69 @@ document.addEventListener("DOMContentLoaded", () => {
       state.selectedId || "";
   }
 
+function populateChartTenorSelect() {
+  const current =
+    state.chartTenor;
+
+  const unique = new Map();
+
+  state.filtered.forEach((record) => {
+    const key =
+      chartRecordKey(record);
+
+    if (!unique.has(key)) {
+      unique.set(key, record);
+    }
+  });
+
+  const options = [
+    new Option(
+      "All available tenors",
+      "all"
+    ),
+  ];
+
+  [...unique.entries()]
+    .sort(
+      (
+        [, first],
+        [, second]
+      ) =>
+        first.tenor_days -
+        second.tenor_days
+    )
+    .forEach(([key, record]) => {
+      options.push(
+        new Option(
+          `${record.tenor} · ${record.instrument_type}`,
+          key
+        )
+      );
+    });
+
+  ui.chartTenorSelect
+    .replaceChildren(...options);
+
+  const availableValues =
+    new Set(
+      [
+        ...ui.chartTenorSelect
+          .options,
+      ].map(
+        (option) =>
+          option.value
+      )
+    );
+
+  state.chartTenor =
+    availableValues.has(current)
+      ? current
+      : "all";
+
+  ui.chartTenorSelect.value =
+    state.chartTenor;
+}
+  
   function applyFilters() {
     const start =
       ui.startDateFilter.value;
@@ -1218,7 +1325,8 @@ document.addEventListener("DOMContentLoaded", () => {
     state.tapeIndex = 0;
 
     populateFlowSelect();
-    renderAll();
+populateChartTenorSelect();
+renderAll();
 
     toast(
       `${state.filtered.length} matching record${
@@ -1268,16 +1376,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderAll() {
-    renderHeader();
-    renderTape();
-    renderSelected();
-    renderLeaders();
-    renderMatrix();
-    renderTable();
-    renderChartPlaceholder();
-    updateControls();
-  }
-
+  renderHeader();
+  renderTape();
+  renderSelected();
+  renderLeaders();
+  renderMatrix();
+  renderTable();
+  renderChart(true);
+  updateControls();
+}
+  
   function renderHeader() {
     const currentLatest =
       latest(state.filtered);
@@ -2249,6 +2357,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     row.dataset.recordId =
       record.id;
+    if (
+  record.id ===
+  state.selectedId
+) {
+  row.classList.add(
+    "is-selected"
+  );
+}
 
     const values = [
       formatDate(
@@ -2359,7 +2475,151 @@ document.addEventListener("DOMContentLoaded", () => {
     return cell;
   }
 
-  function renderChartPlaceholder() {
+  function setChartMetric(metric) {
+  if (!chartMetricConfig(metric)) {
+    return;
+  }
+
+  state.chartMetric = metric;
+  state.chartHoverPoint = null;
+
+  syncChartButtons();
+  hideChartTooltip();
+  renderChart(true);
+}
+
+function syncChartButtons() {
+  ui.chartButtons.forEach(
+    (button) => {
+      const active =
+        button.dataset.metric ===
+        state.chartMetric;
+
+      button.classList.toggle(
+        "is-active",
+        active
+      );
+
+      button.setAttribute(
+        "aria-pressed",
+        String(active)
+      );
+    }
+  );
+}
+
+function chartMetricConfig(
+  metric = state.chartMetric
+) {
+  const configurations = {
+    accepted_yield: {
+      label: "Accepted yield",
+      accessor: (record) =>
+        record.accepted_yield,
+      formatter: formatYield,
+      axisFormatter: (value) =>
+        `${value.toFixed(2)}%`,
+    },
+
+    bid_to_cover: {
+      label: "Bid-to-cover ratio",
+      accessor: (record) =>
+        record.bid_to_cover,
+      formatter: (value) =>
+        `${value.toFixed(2)}×`,
+      axisFormatter: (value) =>
+        `${value.toFixed(1)}×`,
+    },
+
+    award_to_offer: {
+      label: "Award-to-offer ratio",
+      accessor: (record) =>
+        record.award_to_offer,
+      formatter: formatPercent,
+      axisFormatter: (value) =>
+        `${value.toFixed(0)}%`,
+    },
+
+    acceptance_ratio: {
+      label: "Bid acceptance ratio",
+      accessor: (record) =>
+        record.acceptance_ratio,
+      formatter: formatPercent,
+      axisFormatter: (value) =>
+        `${value.toFixed(0)}%`,
+    },
+
+    yield_change_bps: {
+      label: "Yield movement",
+      accessor: (record) =>
+        record.yield_change_bps,
+      formatter: formatBps,
+      axisFormatter: (value) =>
+        `${value > 0 ? "+" : ""}${value.toFixed(0)}`,
+    },
+  };
+
+  return configurations[metric] ||
+    null;
+}
+
+function chartRecordKey(record) {
+  return [
+    record.instrument_type,
+    record.tenor_days,
+  ].join("|");
+}
+
+function chartSeriesLabel(record) {
+  return `${record.tenor} · ${record.instrument_type}`;
+}
+
+function renderChart(
+  animate = true
+) {
+  if (
+    state.chartAnimationFrame
+  ) {
+    cancelAnimationFrame(
+      state.chartAnimationFrame
+    );
+  }
+
+  state.chartAnimationFrame =
+    null;
+
+  state.chartHoverPoint = null;
+  hideChartTooltip();
+  syncChartButtons();
+
+  const prepared =
+    prepareChartCanvas();
+
+  const model =
+    buildChartModel(
+      prepared.ctx,
+      prepared.width,
+      prepared.height
+    );
+
+  state.chartModel = model;
+  state.chartPoints =
+    model?.points || [];
+
+  if (!model) {
+    prepared.ctx.clearRect(
+      0,
+      0,
+      prepared.width,
+      prepared.height
+    );
+
+    ui.chartStage.classList
+      .remove("has-data");
+
+    ui.chartEmptyState.hidden =
+      false;
+
     const heading =
       ui.chartEmptyState.querySelector(
         "strong"
@@ -2370,17 +2630,1412 @@ document.addEventListener("DOMContentLoaded", () => {
         "p"
       );
 
-    heading.textContent =
-      state.filtered.length
-        ? "Series data prepared"
-        : "Awaiting auction data";
+    if (!state.filtered.length) {
+      heading.textContent =
+        "Awaiting auction data";
 
-    paragraph.textContent =
-      state.filtered.length
-        ? "The processed auction series is ready. Interactive chart rendering is added in Pass 4."
-        : "Upload a CSV, paste a dataset, enter an auction manually, or load the illustrative sample.";
+      paragraph.textContent =
+        "Upload a CSV, paste a dataset, enter an auction manually, or load the illustrative sample.";
+    } else {
+      heading.textContent =
+        "No comparable observations";
+
+      paragraph.textContent =
+        state.chartMetric ===
+        "yield_change_bps"
+          ? "The selected view needs at least two same-tenor auctions to calculate a yield shift."
+          : "No valid values are available for the current chart selection.";
+    }
+
+    ui.chartLegend
+      .replaceChildren();
+
+    return;
   }
 
+  ui.chartStage.classList
+    .add("has-data");
+
+  ui.chartEmptyState.hidden =
+    true;
+
+  renderChartLegend(
+    model.series
+  );
+
+  const reduceMotion =
+    window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+  if (
+    !animate ||
+    reduceMotion
+  ) {
+    drawChart(
+      model,
+      1,
+      null
+    );
+
+    return;
+  }
+
+  const started =
+    performance.now();
+
+  const duration = 720;
+
+  const frame = (time) => {
+    const elapsed =
+      time - started;
+
+    const progress =
+      Math.min(
+        1,
+        elapsed / duration
+      );
+
+    drawChart(
+      model,
+      easeOutCubic(progress),
+      null
+    );
+
+    if (progress < 1) {
+      state.chartAnimationFrame =
+        requestAnimationFrame(
+          frame
+        );
+    } else {
+      state.chartAnimationFrame =
+        null;
+    }
+  };
+
+  state.chartAnimationFrame =
+    requestAnimationFrame(frame);
+}
+
+function prepareChartCanvas() {
+  const width =
+    Math.max(
+      320,
+      ui.chartStage.clientWidth
+    );
+
+  const height =
+    Math.max(
+      300,
+      ui.chartStage.clientHeight
+    );
+
+  const pixelRatio =
+    Math.min(
+      2,
+      window.devicePixelRatio ||
+        1
+    );
+
+  ui.marketChart.width =
+    Math.round(
+      width * pixelRatio
+    );
+
+  ui.marketChart.height =
+    Math.round(
+      height * pixelRatio
+    );
+
+  ui.marketChart.style.width =
+    `${width}px`;
+
+  ui.marketChart.style.height =
+    `${height}px`;
+
+  const ctx =
+    ui.marketChart.getContext(
+      "2d"
+    );
+
+  ctx.setTransform(
+    pixelRatio,
+    0,
+    0,
+    pixelRatio,
+    0,
+    0
+  );
+
+  return {
+    ctx,
+    width,
+    height,
+  };
+}
+
+function buildChartModel(
+  ctx,
+  width,
+  height
+) {
+  const config =
+    chartMetricConfig();
+
+  if (!config) {
+    return null;
+  }
+
+  let records = [
+    ...state.filtered,
+  ];
+
+  if (
+    state.chartTenor !== "all"
+  ) {
+    records = records.filter(
+      (record) =>
+        chartRecordKey(record) ===
+        state.chartTenor
+    );
+  }
+
+  records = records
+    .filter(
+      (record) =>
+        Number.isFinite(
+          config.accessor(record)
+        )
+    )
+    .sort(
+      (first, second) =>
+        first.auction_date
+          .localeCompare(
+            second.auction_date
+          ) ||
+        first.tenor_days -
+          second.tenor_days
+    );
+
+  if (!records.length) {
+    return null;
+  }
+
+  const grouped =
+    new Map();
+
+  records.forEach((record) => {
+    const key =
+      chartRecordKey(record);
+
+    if (!grouped.has(key)) {
+      grouped.set(key, []);
+    }
+
+    grouped.get(key).push(
+      record
+    );
+  });
+
+  const palette = [
+    cssVariable("--cyan"),
+    cssVariable("--violet"),
+    cssVariable("--green"),
+    cssVariable("--amber"),
+    cssVariable("--red"),
+    "#8dd3ff",
+    "#d5a6ff",
+  ];
+
+  const padding = {
+    top: 28,
+    right: 24,
+    bottom: 49,
+    left:
+      width < 600
+        ? 56
+        : 72,
+  };
+
+  const plot = {
+    left: padding.left,
+    top: padding.top,
+    right:
+      width - padding.right,
+    bottom:
+      height - padding.bottom,
+  };
+
+  plot.width =
+    plot.right - plot.left;
+
+  plot.height =
+    plot.bottom - plot.top;
+
+  const timestamps =
+    records.map(
+      (record) =>
+        auctionTimestamp(
+          record.auction_date
+        )
+    );
+
+  let xMinimum =
+    Math.min(...timestamps);
+
+  let xMaximum =
+    Math.max(...timestamps);
+
+  if (xMinimum === xMaximum) {
+    const oneDay =
+      24 * 60 * 60 * 1000;
+
+    xMinimum -= oneDay;
+    xMaximum += oneDay;
+  }
+
+  const values =
+    records.map(
+      (record) =>
+        config.accessor(record)
+    );
+
+  const yScale =
+    niceChartScale(
+      values,
+      state.chartMetric
+    );
+
+  const xPosition = (time) =>
+    plot.left +
+    (
+      (time - xMinimum) /
+      (xMaximum - xMinimum)
+    ) *
+      plot.width;
+
+  const yPosition = (value) =>
+    plot.bottom -
+    (
+      (value - yScale.minimum) /
+      (
+        yScale.maximum -
+        yScale.minimum
+      )
+    ) *
+      plot.height;
+
+  const series = [
+    ...grouped.entries(),
+  ]
+    .sort(
+      (
+        [, firstRecords],
+        [, secondRecords]
+      ) =>
+        firstRecords[0]
+          .tenor_days -
+        secondRecords[0]
+          .tenor_days
+    )
+    .map(
+      (
+        [key, seriesRecords],
+        index
+      ) => {
+        const color =
+          palette[
+            index %
+              palette.length
+          ];
+
+        const points =
+          seriesRecords.map(
+            (record) => {
+              const value =
+                config.accessor(
+                  record
+                );
+
+              return {
+                x: xPosition(
+                  auctionTimestamp(
+                    record.auction_date
+                  )
+                ),
+
+                y: yPosition(value),
+
+                value,
+                record,
+                color,
+                seriesKey: key,
+              };
+            }
+          );
+
+        return {
+          key,
+          color,
+          label:
+            chartSeriesLabel(
+              seriesRecords[0]
+            ),
+          points,
+        };
+      }
+    );
+
+  const dates = [
+    ...new Set(timestamps),
+  ].sort(
+    (first, second) =>
+      first - second
+  );
+
+  const points =
+    series.flatMap(
+      (item) =>
+        item.points
+    );
+
+  return {
+    ctx,
+    width,
+    height,
+    config,
+    plot,
+    series,
+    points,
+    dates,
+    xMinimum,
+    xMaximum,
+    yScale,
+  };
+}
+
+function niceChartScale(
+  values,
+  metric
+) {
+  let minimum =
+    Math.min(...values);
+
+  let maximum =
+    Math.max(...values);
+
+  if (
+    metric ===
+    "yield_change_bps"
+  ) {
+    minimum =
+      Math.min(minimum, 0);
+
+    maximum =
+      Math.max(maximum, 0);
+  }
+
+  if (minimum === maximum) {
+    const expansion =
+      Math.abs(minimum) *
+        0.08 || 1;
+
+    minimum -= expansion;
+    maximum += expansion;
+  }
+
+  const rawStep =
+    (maximum - minimum) / 5;
+
+  const step =
+    niceNumber(
+      rawStep,
+      true
+    );
+
+  const niceMinimum =
+    Math.floor(
+      minimum / step
+    ) * step;
+
+  const niceMaximum =
+    Math.ceil(
+      maximum / step
+    ) * step;
+
+  const ticks = [];
+
+  for (
+    let value = niceMinimum;
+    value <=
+      niceMaximum +
+        step * 0.25;
+    value += step
+  ) {
+    ticks.push(
+      Number(
+        value.toFixed(10)
+      )
+    );
+
+    if (ticks.length > 12) {
+      break;
+    }
+  }
+
+  return {
+    minimum: niceMinimum,
+    maximum: niceMaximum,
+    step,
+    ticks,
+  };
+}
+
+function niceNumber(
+  value,
+  round
+) {
+  const exponent =
+    Math.floor(
+      Math.log10(
+        Math.abs(value) || 1
+      )
+    );
+
+  const fraction =
+    value /
+    10 ** exponent;
+
+  let niceFraction;
+
+  if (round) {
+    if (fraction < 1.5) {
+      niceFraction = 1;
+    } else if (
+      fraction < 3
+    ) {
+      niceFraction = 2;
+    } else if (
+      fraction < 7
+    ) {
+      niceFraction = 5;
+    } else {
+      niceFraction = 10;
+    }
+  } else if (
+    fraction <= 1
+  ) {
+    niceFraction = 1;
+  } else if (
+    fraction <= 2
+  ) {
+    niceFraction = 2;
+  } else if (
+    fraction <= 5
+  ) {
+    niceFraction = 5;
+  } else {
+    niceFraction = 10;
+  }
+
+  return (
+    niceFraction *
+    10 ** exponent
+  );
+}
+
+function drawChart(
+  model,
+  progress,
+  hoverPoint
+) {
+  const {
+    ctx,
+    width,
+    height,
+    plot,
+    yScale,
+    config,
+  } = model;
+
+  ctx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  ctx.save();
+
+  drawChartGrid(model);
+  drawChartSeries(
+    model,
+    progress
+  );
+
+  const selectedPoint =
+    model.points.find(
+      (point) =>
+        point.record.id ===
+        state.selectedId
+    );
+
+  if (selectedPoint) {
+    drawSelectedChartPoint(
+      ctx,
+      selectedPoint
+    );
+  }
+
+  if (hoverPoint) {
+    drawChartCrosshair(
+      model,
+      hoverPoint
+    );
+  }
+
+  ctx.restore();
+
+  state.chartPoints =
+    model.points;
+
+  void plot;
+  void yScale;
+  void config;
+}
+
+function drawChartGrid(model) {
+  const {
+    ctx,
+    plot,
+    yScale,
+    config,
+    dates,
+    xMinimum,
+    xMaximum,
+  } = model;
+
+  ctx.save();
+
+  ctx.font =
+    '10px "SFMono-Regular", Consolas, monospace';
+
+  ctx.lineWidth = 1;
+
+  yScale.ticks.forEach(
+    (value) => {
+      const y =
+        plot.bottom -
+        (
+          (
+            value -
+            yScale.minimum
+          ) /
+          (
+            yScale.maximum -
+            yScale.minimum
+          )
+        ) *
+          plot.height;
+
+      ctx.beginPath();
+      ctx.strokeStyle =
+        "rgba(157, 205, 224, 0.10)";
+
+      ctx.moveTo(
+        plot.left,
+        y
+      );
+
+      ctx.lineTo(
+        plot.right,
+        y
+      );
+
+      ctx.stroke();
+
+      ctx.fillStyle =
+        "rgba(113, 131, 140, 0.92)";
+
+      ctx.textAlign =
+        "right";
+
+      ctx.textBaseline =
+        "middle";
+
+      ctx.fillText(
+        config.axisFormatter(
+          value
+        ),
+        plot.left - 10,
+        y
+      );
+    }
+  );
+
+  if (
+    yScale.minimum < 0 &&
+    yScale.maximum > 0
+  ) {
+    const zeroY =
+      plot.bottom -
+      (
+        (0 - yScale.minimum) /
+        (
+          yScale.maximum -
+          yScale.minimum
+        )
+      ) *
+        plot.height;
+
+    ctx.save();
+    ctx.setLineDash([5, 5]);
+    ctx.strokeStyle =
+      "rgba(255, 197, 102, 0.35)";
+
+    ctx.beginPath();
+    ctx.moveTo(
+      plot.left,
+      zeroY
+    );
+
+    ctx.lineTo(
+      plot.right,
+      zeroY
+    );
+
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  const dateTicks =
+    sampledValues(
+      dates,
+      Math.min(
+        6,
+        dates.length
+      )
+    );
+
+  dateTicks.forEach(
+    (timestamp) => {
+      const x =
+        plot.left +
+        (
+          (
+            timestamp -
+            xMinimum
+          ) /
+          (
+            xMaximum -
+            xMinimum
+          )
+        ) *
+          plot.width;
+
+      ctx.beginPath();
+      ctx.strokeStyle =
+        "rgba(157, 205, 224, 0.065)";
+
+      ctx.moveTo(
+        x,
+        plot.top
+      );
+
+      ctx.lineTo(
+        x,
+        plot.bottom
+      );
+
+      ctx.stroke();
+
+      ctx.fillStyle =
+        "rgba(113, 131, 140, 0.88)";
+
+      ctx.textAlign =
+        "center";
+
+      ctx.textBaseline =
+        "top";
+
+      ctx.fillText(
+        formatChartDate(
+          timestamp
+        ),
+        x,
+        plot.bottom + 13
+      );
+    }
+  );
+
+  ctx.restore();
+}
+
+function drawChartSeries(
+  model,
+  progress
+) {
+  const { ctx } = model;
+
+  model.series.forEach(
+    (series) => {
+      const points =
+        series.points;
+
+      if (!points.length) {
+        return;
+      }
+
+      ctx.save();
+
+      ctx.strokeStyle =
+        series.color;
+
+      ctx.fillStyle =
+        series.color;
+
+      ctx.lineWidth = 2;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+
+      ctx.shadowColor =
+        series.color;
+
+      ctx.shadowBlur = 10;
+
+      if (points.length === 1) {
+        if (progress > 0.35) {
+          drawChartDot(
+            ctx,
+            points[0],
+            4
+          );
+        }
+
+        ctx.restore();
+        return;
+      }
+
+      const totalSegments =
+        points.length - 1;
+
+      const drawnSegments =
+        totalSegments *
+        progress;
+
+      const completeSegments =
+        Math.floor(
+          drawnSegments
+        );
+
+      const partialProgress =
+        drawnSegments -
+        completeSegments;
+
+      ctx.beginPath();
+
+      ctx.moveTo(
+        points[0].x,
+        points[0].y
+      );
+
+      for (
+        let index = 1;
+        index <=
+          Math.min(
+            completeSegments,
+            totalSegments
+          );
+        index += 1
+      ) {
+        ctx.lineTo(
+          points[index].x,
+          points[index].y
+        );
+      }
+
+      if (
+        completeSegments <
+          totalSegments &&
+        partialProgress > 0
+      ) {
+        const start =
+          points[
+            completeSegments
+          ];
+
+        const end =
+          points[
+            completeSegments + 1
+          ];
+
+        ctx.lineTo(
+          start.x +
+            (
+              end.x -
+              start.x
+            ) *
+              partialProgress,
+
+          start.y +
+            (
+              end.y -
+              start.y
+            ) *
+              partialProgress
+        );
+      }
+
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+
+      const visiblePointCount =
+        Math.min(
+          points.length,
+          Math.ceil(
+            drawnSegments
+          ) + 1
+        );
+
+      for (
+        let index = 0;
+        index <
+          visiblePointCount;
+        index += 1
+      ) {
+        drawChartDot(
+          ctx,
+          points[index],
+          index ===
+            points.length - 1
+            ? 4.2
+            : 3
+        );
+      }
+
+      ctx.restore();
+    }
+  );
+}
+
+function drawChartDot(
+  ctx,
+  point,
+  radius
+) {
+  ctx.save();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    point.x,
+    point.y,
+    radius,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fillStyle =
+    point.color;
+
+  ctx.fill();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    point.x,
+    point.y,
+    Math.max(
+      1.5,
+      radius - 1.5
+    ),
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fillStyle =
+    "#071017";
+
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawSelectedChartPoint(
+  ctx,
+  point
+) {
+  ctx.save();
+
+  ctx.beginPath();
+
+  ctx.arc(
+    point.x,
+    point.y,
+    7,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.strokeStyle =
+    point.color;
+
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor =
+    point.color;
+  ctx.shadowBlur = 14;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawChartCrosshair(
+  model,
+  point
+) {
+  const {
+    ctx,
+    plot,
+  } = model;
+
+  ctx.save();
+
+  ctx.setLineDash([4, 5]);
+
+  ctx.strokeStyle =
+    "rgba(237, 247, 250, 0.28)";
+
+  ctx.lineWidth = 1;
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    point.x,
+    plot.top
+  );
+
+  ctx.lineTo(
+    point.x,
+    plot.bottom
+  );
+
+  ctx.moveTo(
+    plot.left,
+    point.y
+  );
+
+  ctx.lineTo(
+    plot.right,
+    point.y
+  );
+
+  ctx.stroke();
+
+  ctx.setLineDash([]);
+
+  ctx.beginPath();
+
+  ctx.arc(
+    point.x,
+    point.y,
+    6,
+    0,
+    Math.PI * 2
+  );
+
+  ctx.fillStyle =
+    "#071017";
+
+  ctx.fill();
+
+  ctx.strokeStyle =
+    point.color;
+
+  ctx.lineWidth = 2;
+  ctx.shadowColor =
+    point.color;
+  ctx.shadowBlur = 18;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function renderChartLegend(
+  series
+) {
+  ui.chartLegend
+    .replaceChildren();
+
+  series.forEach((item) => {
+    const legendItem =
+      document.createElement(
+        "span"
+      );
+
+    legendItem.className =
+      "chart-legend__item";
+
+    const swatch =
+      document.createElement(
+        "span"
+      );
+
+    swatch.className =
+      "chart-legend__swatch";
+
+    swatch.style.background =
+      item.color;
+
+    const label =
+      document.createElement(
+        "span"
+      );
+
+    label.textContent =
+      item.label;
+
+    legendItem.append(
+      swatch,
+      label
+    );
+
+    ui.chartLegend
+      .appendChild(
+        legendItem
+      );
+  });
+}
+
+function handleChartPointer(
+  event
+) {
+  const model =
+    state.chartModel;
+
+  if (
+    !model ||
+    !state.chartPoints.length
+  ) {
+    return;
+  }
+
+  const rectangle =
+    ui.marketChart
+      .getBoundingClientRect();
+
+  const x =
+    (
+      event.clientX -
+      rectangle.left
+    ) *
+    (
+      model.width /
+      rectangle.width
+    );
+
+  const y =
+    (
+      event.clientY -
+      rectangle.top
+    ) *
+    (
+      model.height /
+      rectangle.height
+    );
+
+  let nearest = null;
+  let nearestDistance =
+    Number.POSITIVE_INFINITY;
+
+  state.chartPoints.forEach(
+    (point) => {
+      const distance =
+        Math.hypot(
+          point.x - x,
+          point.y - y
+        );
+
+      if (
+        distance <
+        nearestDistance
+      ) {
+        nearest = point;
+        nearestDistance =
+          distance;
+      }
+    }
+  );
+
+  if (
+    !nearest ||
+    nearestDistance > 28
+  ) {
+    clearChartHover();
+    return;
+  }
+
+  state.chartHoverPoint =
+    nearest;
+
+  drawChart(
+    model,
+    1,
+    nearest
+  );
+
+  showChartTooltip(
+    nearest,
+    event
+  );
+}
+
+function showChartTooltip(
+  point,
+  event
+) {
+  const config =
+    chartMetricConfig();
+
+  ui.chartTooltip
+    .replaceChildren();
+
+  const title =
+    document.createElement(
+      "strong"
+    );
+
+  title.textContent =
+    `${point.record.tenor} · ${point.record.instrument_type}`;
+
+  const date =
+    document.createElement(
+      "span"
+    );
+
+  date.textContent =
+    formatDate(
+      point.record.auction_date
+    );
+
+  const value =
+    document.createElement(
+      "span"
+    );
+
+  value.textContent =
+    `${config.label}: ${config.formatter(
+      point.value
+    )}`;
+
+  const context =
+    document.createElement(
+      "span"
+    );
+
+  context.textContent =
+    `Cover ${point.record.bid_to_cover.toFixed(
+      2
+    )}× · ${formatAward(
+      point.record.award_status
+    )}`;
+
+  ui.chartTooltip.append(
+    title,
+    date,
+    value,
+    context
+  );
+
+  ui.chartTooltip.hidden =
+    false;
+
+  const stageRectangle =
+    ui.chartStage
+      .getBoundingClientRect();
+
+  const tooltipRectangle =
+    ui.chartTooltip
+      .getBoundingClientRect();
+
+  let left =
+    event.clientX -
+    stageRectangle.left +
+    15;
+
+  let top =
+    event.clientY -
+    stageRectangle.top +
+    15;
+
+  if (
+    left +
+      tooltipRectangle.width >
+    stageRectangle.width - 8
+  ) {
+    left =
+      event.clientX -
+      stageRectangle.left -
+      tooltipRectangle.width -
+      15;
+  }
+
+  if (
+    top +
+      tooltipRectangle.height >
+    stageRectangle.height - 8
+  ) {
+    top =
+      event.clientY -
+      stageRectangle.top -
+      tooltipRectangle.height -
+      15;
+  }
+
+  ui.chartTooltip.style.left =
+    `${Math.max(8, left)}px`;
+
+  ui.chartTooltip.style.top =
+    `${Math.max(8, top)}px`;
+}
+
+function hideChartTooltip() {
+  ui.chartTooltip.hidden =
+    true;
+
+  ui.chartTooltip.style.left =
+    "";
+
+  ui.chartTooltip.style.top =
+    "";
+}
+
+function clearChartHover() {
+  if (
+    !state.chartHoverPoint
+  ) {
+    hideChartTooltip();
+    return;
+  }
+
+  state.chartHoverPoint =
+    null;
+
+  hideChartTooltip();
+
+  if (state.chartModel) {
+    drawChart(
+      state.chartModel,
+      1,
+      null
+    );
+  }
+}
+
+function selectChartPoint() {
+  if (
+    state.chartHoverPoint
+  ) {
+    selectRecord(
+      state.chartHoverPoint
+        .record.id
+    );
+  }
+}
+
+function sampledValues(
+  values,
+  desiredCount
+) {
+  if (
+    values.length <=
+    desiredCount
+  ) {
+    return [...values];
+  }
+
+  const sampled =
+    new Set();
+
+  for (
+    let index = 0;
+    index < desiredCount;
+    index += 1
+  ) {
+    const position =
+      Math.round(
+        (
+          index *
+          (values.length - 1)
+        ) /
+        (desiredCount - 1)
+      );
+
+    sampled.add(
+      values[position]
+    );
+  }
+
+  return [...sampled];
+}
+
+function auctionTimestamp(
+  value
+) {
+  return new Date(
+    `${value}T00:00:00Z`
+  ).getTime();
+}
+
+function formatChartDate(
+  timestamp
+) {
+  return new Intl.DateTimeFormat(
+    "en-PH",
+    {
+      month: "short",
+      day: "2-digit",
+      timeZone: "UTC",
+    }
+  ).format(
+    new Date(timestamp)
+  );
+}
+
+function cssVariable(name) {
+  return getComputedStyle(
+    document.documentElement
+  )
+    .getPropertyValue(name)
+    .trim();
+}
+
+function easeOutCubic(value) {
+  return (
+    1 -
+    (1 - value) ** 3
+  );
+}
+
+function debounce(
+  callback,
+  delay
+) {
+  let timeout;
+
+  return (...argumentsList) => {
+    clearTimeout(timeout);
+
+    timeout = setTimeout(
+      () => {
+        callback(
+          ...argumentsList
+        );
+      },
+      delay
+    );
+  };
+}
   function renderNoSelection() {
     [
       ui.overviewCoverRatio,
@@ -2443,6 +4098,36 @@ document.addEventListener("DOMContentLoaded", () => {
     state.source = "";
     state.search = "";
     state.tapeIndex = 0;
+    state.chartMetric =
+  "accepted_yield";
+
+state.chartTenor = "all";
+state.chartModel = null;
+state.chartPoints = [];
+state.chartHoverPoint = null;
+
+if (
+  state.chartAnimationFrame
+) {
+  cancelAnimationFrame(
+    state.chartAnimationFrame
+  );
+}
+
+state.chartAnimationFrame = null;
+
+ui.chartTenorSelect
+  .replaceChildren(
+    new Option(
+      "All available tenors",
+      "all"
+    )
+  );
+
+ui.chartTenorSelect.value =
+  "all";
+
+hideChartTooltip();
     state.sortKey =
       "auction_date";
     state.sortDirection =
@@ -2476,14 +4161,18 @@ document.addEventListener("DOMContentLoaded", () => {
       element.disabled = !hasData;
     });
 
-    /*
-      Pass 4 activates these controls.
-    */
-    ui.chartButtons.forEach(
-      (button) => {
-        button.disabled = true;
-      }
-    );
+    const hasChartData =
+  state.filtered.length > 0;
+
+ui.chartButtons.forEach(
+  (button) => {
+    button.disabled =
+      !hasChartData;
+  }
+);
+
+ui.chartTenorSelect.disabled =
+  !hasChartData;
 
     /*
       Pass 5 activates save/export controls.
@@ -2547,13 +4236,32 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function selectRecord(id) {
-    state.selectedId = id;
+  const exists =
+    state.filtered.some(
+      (record) =>
+        record.id === id
+    );
 
-    ui.auctionFlowRecordSelect
-      .value = id;
-
-    renderSelected();
+  if (!exists) {
+    return;
   }
+
+  state.selectedId = id;
+
+  ui.auctionFlowRecordSelect
+    .value = id;
+
+  renderSelected();
+  renderTable();
+
+  if (state.chartModel) {
+    drawChart(
+      state.chartModel,
+      1,
+      state.chartHoverPoint
+    );
+  }
+}
 
   function selected() {
     return (
