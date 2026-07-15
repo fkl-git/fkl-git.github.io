@@ -2747,6 +2747,7 @@ const frame = (time) => {
 
 state.chartAnimationFrame =
   requestAnimationFrame(frame);
+}
 
 function prepareChartCanvas() {
   const width =
