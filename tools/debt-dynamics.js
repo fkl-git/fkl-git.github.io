@@ -20,6 +20,7 @@ const state = {
   activeScenario: "baseline",
   activeMeasure: "debt",
   savedScenarios: [],
+  isDirty: false,
 };
   
   const scenarioOrder = ["favorable", "baseline", "adverse"];
@@ -198,8 +199,20 @@ announcer: document.getElementById("model-announcer"),
 });
 
     elements.printButton.addEventListener("click", () => {
-      window.print();
-    });
+  if (state.isDirty) {
+    const modelSucceeded = runModel();
+
+    if (!modelSucceeded) {
+      announce(
+        "Correct the model inputs before printing the report."
+      );
+
+      return;
+    }
+  }
+
+  window.print();
+});
 
     elements.exportButton.addEventListener("click", exportSelectedCSV);
 
@@ -262,13 +275,15 @@ elements.loadButton.addEventListener("click", () => {
   }
 
   function markModelDirty() {
-    if (!state.results) {
-      return;
-    }
+  state.isDirty = true;
 
-    setText("header-model-status", "Inputs changed");
-    setStatusDot("amber");
+  if (!state.results) {
+    return;
   }
+
+  setText("header-model-status", "Inputs changed · Run model");
+  setStatusDot("amber");
+}
 
   /*
     ============================================================
@@ -370,13 +385,35 @@ elements.loadButton.addEventListener("click", () => {
     const errors = [];
 
     Object.entries(inputs).forEach(([key, value]) => {
-      if (
-        key !== "growthMode" &&
-        !Number.isFinite(value)
-      ) {
-        errors.push(`A valid number is required for ${key}.`);
-      }
-    });
+  const ignoredKeys = new Set([
+    "growthMode",
+    "nominalGrowth",
+  ]);
+
+  if (
+    inputs.growthMode === "components" &&
+    key === "directNominalGrowth"
+  ) {
+    ignoredKeys.add(key);
+  }
+
+  if (
+    inputs.growthMode === "direct" &&
+    (key === "realGrowth" || key === "inflation")
+  ) {
+    ignoredKeys.add(key);
+  }
+
+  if (ignoredKeys.has(key)) {
+    return;
+  }
+
+  if (!Number.isFinite(value)) {
+    errors.push(
+      `A valid number is required for ${formatInputName(key)}.`
+    );
+  }
+});
 
     if (inputs.baseYear < 1900 || inputs.baseYear > 2200) {
       errors.push("Base year must be between 1900 and 2200.");
@@ -530,12 +567,15 @@ elements.loadButton.addEventListener("click", () => {
     renderAll();
 
     announce(
-      `Model complete. Baseline ending debt is ${formatPercent(
-        scenarios.baseline.summary.finalDebt,
-        1
-      )}.`
-    );
-    return true;
+  `Model complete. Baseline ending debt is ${formatPercent(
+    scenarios.baseline.summary.finalDebt,
+    1
+  )}.`
+);
+
+state.isDirty = false;
+
+return true;
   }
 
   function createScenarioConfigs(inputs) {
@@ -2281,10 +2321,17 @@ function formatSavedDate(dateValue) {
   */
 
   function exportSelectedCSV() {
-    if (!state.results) {
-      announce("Run the model before exporting.");
-      return;
-    }
+    if (!state.results || state.isDirty) {
+  const modelSucceeded = runModel();
+
+  if (!modelSucceeded) {
+    announce(
+      "Correct the model inputs before exporting."
+    );
+
+    return;
+  }
+}
 
     const scenarioKey = elements.tableScenario.value;
     const scenario =
@@ -2403,6 +2450,12 @@ function formatSavedDate(dateValue) {
     return `${prefix}${value.toFixed(decimals)}`;
   }
 
+  function formatInputName(key) {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (character) => character.toUpperCase());
+}
+  
   function formatPercent(value, decimals = 1) {
     if (!Number.isFinite(value)) {
       return "—";
