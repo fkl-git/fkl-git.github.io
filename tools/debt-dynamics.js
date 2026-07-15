@@ -10,12 +10,18 @@
 document.addEventListener("DOMContentLoaded", () => {
   const SVG_NS = "http://www.w3.org/2000/svg";
 
-  const state = {
-    results: null,
-    activeScenario: "baseline",
-    activeMeasure: "debt",
-  };
+const STORAGE_KEYS = Object.freeze({
+  scenarios: "fiscalCommand.savedScenarios.v1",
+  contrast: "fiscalCommand.highContrast.v1",
+});
 
+const state = {
+  results: null,
+  activeScenario: "baseline",
+  activeMeasure: "debt",
+  savedScenarios: [],
+};
+  
   const scenarioOrder = ["favorable", "baseline", "adverse"];
 
   const scenarioMeta = {
@@ -95,10 +101,14 @@ document.addEventListener("DOMContentLoaded", () => {
       "saved-scenarios-dialog"
     ),
     closeScenariosDialog: document.getElementById(
-      "close-scenarios-dialog"
-    ),
+  "close-scenarios-dialog"
+),
 
-    announcer: document.getElementById("model-announcer"),
+savedScenariosList: document.getElementById(
+  "saved-scenarios-list"
+),
+
+announcer: document.getElementById("model-announcer"),
   };
 
   initialize();
@@ -110,13 +120,17 @@ document.addEventListener("DOMContentLoaded", () => {
   */
 
   function initialize() {
-    bindEvents();
-    syncGrowthMode();
-    updateCalculatedNominalGrowth();
+  state.savedScenarios = loadSavedScenariosFromStorage();
 
-    // Run the default model immediately so the dashboard is populated.
-    runModel();
-  }
+  restoreContrastPreference();
+  bindEvents();
+  syncGrowthMode();
+  updateCalculatedNominalGrowth();
+  renderSavedScenarios();
+
+  // Run the default model immediately so the dashboard is populated.
+  runModel();
+}
 
   function bindEvents() {
     elements.runButton.addEventListener("click", runModel);
@@ -170,19 +184,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     elements.contrastButton.addEventListener("click", () => {
-      const enabled = document.body.classList.toggle("high-contrast");
+  const enabled = !document.body.classList.contains(
+    "high-contrast"
+  );
 
-      elements.contrastButton.setAttribute(
-        "aria-pressed",
-        String(enabled)
-      );
+  setContrastMode(enabled, true);
 
-      announce(
-        enabled
-          ? "High-contrast mode enabled."
-          : "High-contrast mode disabled."
-      );
-    });
+  announce(
+    enabled
+      ? "High-contrast mode enabled."
+      : "High-contrast mode disabled."
+  );
+});
 
     elements.printButton.addEventListener("click", () => {
       window.print();
@@ -190,24 +203,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     elements.exportButton.addEventListener("click", exportSelectedCSV);
 
-    /*
-      Save and load are completed in Pass 4.
-      The Load dialog is already functional as an empty shell.
-    */
+    elements.saveButton.addEventListener("click", saveCurrentScenario);
 
-    elements.saveButton.addEventListener("click", () => {
-      temporaryStatus("Scenario saving arrives in Pass 4.");
-      announce("Scenario saving will be added in Pass 4.");
-    });
+elements.loadButton.addEventListener("click", () => {
+  renderSavedScenarios();
 
-    elements.loadButton.addEventListener("click", () => {
-      if (
-        elements.scenariosDialog &&
-        typeof elements.scenariosDialog.showModal === "function"
-      ) {
-        elements.scenariosDialog.showModal();
-      }
-    });
+  if (
+    elements.scenariosDialog &&
+    typeof elements.scenariosDialog.showModal === "function"
+  ) {
+    elements.scenariosDialog.showModal();
+  }
+});
 
     elements.closeScenariosDialog.addEventListener("click", () => {
       elements.scenariosDialog.close();
@@ -492,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showValidationErrors(errors);
       setText("header-model-status", "Input error");
       setStatusDot("red");
-      return;
+      return false;
     }
 
     hideValidationErrors();
@@ -528,6 +535,7 @@ document.addEventListener("DOMContentLoaded", () => {
         1
       )}.`
     );
+    return true;
   }
 
   function createScenarioConfigs(inputs) {
@@ -1740,6 +1748,532 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${value.toFixed(1)}% of GDP`;
   }
 
+  /*
+  ============================================================
+  SAVED SCENARIOS AND PREFERENCES
+  ============================================================
+*/
+
+function saveCurrentScenario() {
+  const modelSucceeded = runModel();
+
+  if (!modelSucceeded) {
+    announce("Correct the model inputs before saving.");
+    return;
+  }
+
+  const inputs = collectInputs();
+
+  const defaultName =
+    `${scenarioMeta[state.activeScenario].label} ` +
+    `${inputs.baseYear}–${
+      inputs.baseYear + inputs.projectionHorizon
+    }`;
+
+  const requestedName = window.prompt(
+    "Name this scenario:",
+    defaultName
+  );
+
+  if (requestedName === null) {
+    return;
+  }
+
+  const name = requestedName.trim();
+
+  if (!name) {
+    temporaryStatus("Scenario name cannot be empty");
+    announce("Scenario was not saved because its name was empty.");
+    return;
+  }
+
+  const now = new Date().toISOString();
+
+  const savedScenario = {
+    schemaVersion: 1,
+    id: generateScenarioId(),
+    name,
+    createdAt: now,
+    updatedAt: now,
+
+    inputs,
+    activeScenario: state.activeScenario,
+    activeMeasure: elements.chartMeasure.value,
+    tableScenario: elements.tableScenario.value,
+  };
+
+  state.savedScenarios.unshift(savedScenario);
+
+  const stored = persistSavedScenarios();
+
+  if (!stored) {
+    state.savedScenarios = state.savedScenarios.filter(
+      (scenario) => scenario.id !== savedScenario.id
+    );
+
+    temporaryStatus("Scenario could not be saved");
+    announce(
+      "Browser storage was unavailable. The scenario was not saved."
+    );
+
+    return;
+  }
+
+  renderSavedScenarios();
+  temporaryStatus("Scenario saved");
+
+  announce(`${name} was saved in this browser.`);
+}
+
+function loadSavedScenario(id) {
+  const savedScenario = state.savedScenarios.find(
+    (scenario) => scenario.id === id
+  );
+
+  if (!savedScenario) {
+    temporaryStatus("Saved scenario not found");
+    return;
+  }
+
+  applySavedInputs(savedScenario.inputs);
+
+  state.activeScenario = scenarioOrder.includes(
+    savedScenario.activeScenario
+  )
+    ? savedScenario.activeScenario
+    : "baseline";
+
+  const allowedMeasures = [
+    "debt",
+    "interest-gdp",
+    "interest-revenue",
+  ];
+
+  state.activeMeasure = allowedMeasures.includes(
+    savedScenario.activeMeasure
+  )
+    ? savedScenario.activeMeasure
+    : "debt";
+
+  elements.chartMeasure.value = state.activeMeasure;
+
+  elements.tableScenario.value = scenarioOrder.includes(
+    savedScenario.tableScenario
+  )
+    ? savedScenario.tableScenario
+    : state.activeScenario;
+
+  syncGrowthMode();
+  updateCalculatedNominalGrowth();
+
+  const modelSucceeded = runModel();
+
+  if (!modelSucceeded) {
+    temporaryStatus("Saved scenario contains invalid inputs");
+    return;
+  }
+
+  if (elements.scenariosDialog.open) {
+    elements.scenariosDialog.close();
+  }
+
+  temporaryStatus(`${savedScenario.name} loaded`);
+
+  announce(
+    `${savedScenario.name} was loaded and the model was recalculated.`
+  );
+}
+
+function renameSavedScenario(id) {
+  const savedScenario = state.savedScenarios.find(
+    (scenario) => scenario.id === id
+  );
+
+  if (!savedScenario) {
+    return;
+  }
+
+  const requestedName = window.prompt(
+    "Rename this scenario:",
+    savedScenario.name
+  );
+
+  if (requestedName === null) {
+    return;
+  }
+
+  const name = requestedName.trim();
+
+  if (!name) {
+    temporaryStatus("Scenario name cannot be empty");
+    return;
+  }
+
+  savedScenario.name = name;
+  savedScenario.updatedAt = new Date().toISOString();
+
+  if (!persistSavedScenarios()) {
+    temporaryStatus("Scenario could not be renamed");
+    return;
+  }
+
+  renderSavedScenarios();
+  temporaryStatus("Scenario renamed");
+
+  announce(`Scenario renamed to ${name}.`);
+}
+
+function deleteSavedScenario(id) {
+  const savedScenario = state.savedScenarios.find(
+    (scenario) => scenario.id === id
+  );
+
+  if (!savedScenario) {
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Delete "${savedScenario.name}"?\n\n` +
+      "This removes it permanently from this browser."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const previousScenarios = [...state.savedScenarios];
+
+  state.savedScenarios = state.savedScenarios.filter(
+    (scenario) => scenario.id !== id
+  );
+
+  if (!persistSavedScenarios()) {
+    state.savedScenarios = previousScenarios;
+    temporaryStatus("Scenario could not be deleted");
+    return;
+  }
+
+  renderSavedScenarios();
+  temporaryStatus("Scenario deleted");
+
+  announce(`${savedScenario.name} was deleted.`);
+}
+
+function renderSavedScenarios() {
+  if (!elements.savedScenariosList) {
+    return;
+  }
+
+  elements.savedScenariosList.replaceChildren();
+
+  if (state.savedScenarios.length === 0) {
+    const emptyState = document.createElement("p");
+
+    emptyState.className = "empty-state";
+    emptyState.textContent =
+      "No scenarios have been saved in this browser.";
+
+    elements.savedScenariosList.appendChild(emptyState);
+    return;
+  }
+
+  const orderedScenarios = [...state.savedScenarios].sort(
+    (first, second) =>
+      new Date(second.updatedAt).getTime() -
+      new Date(first.updatedAt).getTime()
+  );
+
+  orderedScenarios.forEach((savedScenario) => {
+    const item = document.createElement("article");
+    item.className = "saved-scenario-item";
+
+    const details = document.createElement("div");
+
+    const title = document.createElement("h3");
+    title.textContent = savedScenario.name;
+
+    const metadata = document.createElement("p");
+
+    const inputs = savedScenario.inputs || {};
+    const startYear = inputs.baseYear ?? "—";
+
+    const endYear =
+      Number.isFinite(inputs.baseYear) &&
+      Number.isFinite(inputs.projectionHorizon)
+        ? inputs.baseYear + inputs.projectionHorizon
+        : "—";
+
+    const scenarioLabel =
+      scenarioMeta[savedScenario.activeScenario]?.label ??
+      "Baseline";
+
+    metadata.textContent =
+      `${scenarioLabel} · ${startYear}–${endYear} · ` +
+      `${formatPercent(inputs.startingDebt)} starting debt · ` +
+      `Saved ${formatSavedDate(savedScenario.updatedAt)}`;
+
+    details.appendChild(title);
+    details.appendChild(metadata);
+
+    const actions = document.createElement("div");
+    actions.className = "saved-scenario-actions";
+
+    const loadButton = createScenarioActionButton(
+      "Load",
+      "saved-scenario-load"
+    );
+
+    loadButton.addEventListener("click", () => {
+      loadSavedScenario(savedScenario.id);
+    });
+
+    const renameButton = createScenarioActionButton(
+      "Rename",
+      "saved-scenario-rename"
+    );
+
+    renameButton.addEventListener("click", () => {
+      renameSavedScenario(savedScenario.id);
+    });
+
+    const deleteButton = createScenarioActionButton(
+      "Delete",
+      "saved-scenario-delete"
+    );
+
+    deleteButton.addEventListener("click", () => {
+      deleteSavedScenario(savedScenario.id);
+    });
+
+    actions.appendChild(loadButton);
+    actions.appendChild(renameButton);
+    actions.appendChild(deleteButton);
+
+    item.appendChild(details);
+    item.appendChild(actions);
+
+    elements.savedScenariosList.appendChild(item);
+  });
+}
+
+function createScenarioActionButton(label, className) {
+  const button = document.createElement("button");
+
+  button.type = "button";
+  button.className = className;
+  button.textContent = label;
+
+  return button;
+}
+
+function applySavedInputs(inputs) {
+  if (!inputs || typeof inputs !== "object") {
+    return;
+  }
+
+  const inputMapping = {
+    "base-year": inputs.baseYear,
+    "projection-horizon": inputs.projectionHorizon,
+    "starting-debt": inputs.startingDebt,
+    "target-debt": inputs.targetDebt,
+
+    "real-growth": inputs.realGrowth,
+    "inflation-rate": inputs.inflation,
+    "direct-nominal-growth": inputs.directNominalGrowth,
+
+    "effective-interest-rate":
+      inputs.effectiveInterestRate,
+
+    "primary-balance": inputs.primaryBalance,
+    "revenue-ratio": inputs.revenueRatio,
+    "annual-stock-flow": inputs.annualStockFlow,
+
+    "favorable-growth-adjustment":
+      inputs.favorableGrowthAdjustment,
+
+    "favorable-rate-adjustment":
+      inputs.favorableRateAdjustment,
+
+    "favorable-primary-adjustment":
+      inputs.favorablePrimaryAdjustment,
+
+    "adverse-growth-shock":
+      inputs.adverseGrowthShock,
+
+    "adverse-rate-shock":
+      inputs.adverseRateShock,
+
+    "adverse-primary-shock":
+      inputs.adversePrimaryShock,
+
+    "adverse-stock-flow-shock":
+      inputs.adverseStockFlowShock,
+
+    "shock-start-year": inputs.shockStartYear,
+    "shock-duration": inputs.shockDuration,
+
+    "foreign-currency-share":
+      inputs.foreignCurrencyShare,
+
+    "depreciation-shock":
+      inputs.depreciationShock,
+  };
+
+  Object.entries(inputMapping).forEach(([id, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    const input = document.getElementById(id);
+
+    if (input) {
+      input.value = String(value);
+    }
+  });
+
+  const growthMode =
+    inputs.growthMode === "direct"
+      ? "direct"
+      : "components";
+
+  const growthModeInput = document.querySelector(
+    `input[name="growthMode"][value="${growthMode}"]`
+  );
+
+  if (growthModeInput) {
+    growthModeInput.checked = true;
+  }
+}
+
+function loadSavedScenariosFromStorage() {
+  try {
+    const stored = window.localStorage.getItem(
+      STORAGE_KEYS.scenarios
+    );
+
+    if (!stored) {
+      return [];
+    }
+
+    const parsed = JSON.parse(stored);
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter((scenario) => {
+      return (
+        scenario &&
+        typeof scenario === "object" &&
+        typeof scenario.id === "string" &&
+        typeof scenario.name === "string" &&
+        scenario.inputs &&
+        typeof scenario.inputs === "object"
+      );
+    });
+  } catch (error) {
+    console.warn(
+      "FISCAL//COMMAND could not read saved scenarios.",
+      error
+    );
+
+    return [];
+  }
+}
+
+function persistSavedScenarios() {
+  try {
+    window.localStorage.setItem(
+      STORAGE_KEYS.scenarios,
+      JSON.stringify(state.savedScenarios)
+    );
+
+    return true;
+  } catch (error) {
+    console.warn(
+      "FISCAL//COMMAND could not save scenarios.",
+      error
+    );
+
+    return false;
+  }
+}
+
+function restoreContrastPreference() {
+  let enabled = false;
+
+  try {
+    enabled =
+      window.localStorage.getItem(STORAGE_KEYS.contrast) ===
+      "true";
+  } catch (error) {
+    console.warn(
+      "FISCAL//COMMAND could not read contrast preference.",
+      error
+    );
+  }
+
+  setContrastMode(enabled, false);
+}
+
+function setContrastMode(enabled, persist) {
+  document.body.classList.toggle(
+    "high-contrast",
+    enabled
+  );
+
+  elements.contrastButton.setAttribute(
+    "aria-pressed",
+    String(enabled)
+  );
+
+  if (!persist) {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(
+      STORAGE_KEYS.contrast,
+      String(enabled)
+    );
+  } catch (error) {
+    console.warn(
+      "FISCAL//COMMAND could not save contrast preference.",
+      error
+    );
+  }
+}
+
+function generateScenarioId() {
+  if (
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ) {
+    return window.crypto.randomUUID();
+  }
+
+  return (
+    `scenario-${Date.now()}-` +
+    Math.random().toString(16).slice(2)
+  );
+}
+
+function formatSavedDate(dateValue) {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "unknown date";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+  
   /*
     ============================================================
     CSV EXPORT
