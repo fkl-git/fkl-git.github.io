@@ -1,1 +1,2303 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
 
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="description"
+    content="CLEARING//POINT is a browser-based Philippine government securities auction lab for analyzing auction demand, accepted yields, award behavior, and tenor signals."
+  >
+
+  <!-- Keep the unfinished tool out of search results during development. -->
+  <meta
+    name="robots"
+    content="noindex, nofollow"
+  >
+
+  <meta
+    name="theme-color"
+    content="#07090d"
+  >
+
+  <title>
+    CLEARING//POINT | Philippine Government Securities Auction Lab
+  </title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="../assets/site-icon.png?v=1.0"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="../assets/site-icon.png?v=1.0"
+  >
+
+  <link
+    rel="stylesheet"
+    href="clearing-point.css?v=0.1.0"
+  >
+
+  <script
+    src="clearing-point.js?v=0.1.0"
+    defer
+  ></script>
+</head>
+
+<body>
+  <a
+    class="skip-link"
+    href="#main-content"
+  >
+    Skip to dashboard
+  </a>
+
+  <noscript>
+    <div class="noscript-warning">
+      CLEARING//POINT requires JavaScript to process auction data and
+      generate analytical outputs.
+    </div>
+  </noscript>
+
+  <div
+    class="cp-app"
+    id="cpApp"
+  >
+
+    <!-- =========================================================
+         COMMAND HEADER
+    ========================================================== -->
+
+    <header class="command-header">
+      <div class="command-header__identity">
+        <a
+          class="product-mark"
+          href="../projects.html"
+          aria-label="Return to Josh Michael Luistro's projects"
+        >
+          <span class="product-mark__primary">
+            CLEARING<span aria-hidden="true">//</span>POINT
+          </span>
+
+          <span class="product-mark__secondary">
+            Philippine Government Securities Auction Lab
+          </span>
+        </a>
+      </div>
+
+      <div
+        class="command-header__status"
+        aria-label="Dataset status"
+      >
+        <div class="status-module">
+          <span class="status-module__label">
+            DATASET
+          </span>
+
+          <span
+            class="status-chip status-chip--idle"
+            id="datasetStatus"
+          >
+            NO DATA LOADED
+          </span>
+        </div>
+
+        <div class="status-module">
+          <span class="status-module__label">
+            RECORDS
+          </span>
+
+          <strong
+            class="status-module__value"
+            id="recordCount"
+          >
+            0
+          </strong>
+        </div>
+
+        <div class="status-module">
+          <span class="status-module__label">
+            LATEST AUCTION
+          </span>
+
+          <strong
+            class="status-module__value"
+            id="latestAuctionDate"
+          >
+            —
+          </strong>
+        </div>
+
+        <div class="status-module">
+          <span class="status-module__label">
+            FILTER
+          </span>
+
+          <strong
+            class="status-module__value"
+            id="activeFilterSummary"
+          >
+            ALL RECORDS
+          </strong>
+        </div>
+      </div>
+
+      <nav
+        class="command-header__actions"
+        aria-label="Dashboard actions"
+      >
+        <button
+          class="button button--ghost"
+          id="toggleDataDockButton"
+          type="button"
+          aria-controls="dataDock"
+          aria-expanded="true"
+        >
+          DATA DOCK
+        </button>
+
+        <button
+          class="button button--ghost"
+          id="openDatasetManagerButton"
+          type="button"
+        >
+          DATASETS
+        </button>
+
+        <button
+          class="button button--ghost"
+          id="exportDataButton"
+          type="button"
+          disabled
+        >
+          EXPORT
+        </button>
+
+        <button
+          class="button button--danger"
+          id="resetDashboardButton"
+          type="button"
+          disabled
+        >
+          RESET
+        </button>
+      </nav>
+    </header>
+
+    <!-- =========================================================
+         AUCTION TAPE
+    ========================================================== -->
+
+    <section
+      class="auction-tape"
+      aria-label="Latest auction observations"
+    >
+      <div class="auction-tape__label">
+        <span
+          class="signal-light"
+          aria-hidden="true"
+        ></span>
+
+        AUCTION//TAPE
+      </div>
+
+      <div
+        class="auction-tape__viewport"
+        id="auctionTapeViewport"
+      >
+        <div
+          class="auction-tape__track"
+          id="auctionTapeTrack"
+        >
+          <span class="auction-tape__empty">
+            Load auction data to initialize the market tape.
+          </span>
+        </div>
+      </div>
+
+      <div class="auction-tape__controls">
+        <button
+          class="icon-button"
+          id="auctionTapePreviousButton"
+          type="button"
+          aria-label="Show previous auction signal"
+          disabled
+        >
+          ←
+        </button>
+
+        <button
+          class="icon-button"
+          id="auctionTapeNextButton"
+          type="button"
+          aria-label="Show next auction signal"
+          disabled
+        >
+          →
+        </button>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         MAIN DASHBOARD
+    ========================================================== -->
+
+    <main
+      class="dashboard"
+      id="main-content"
+    >
+
+      <!-- =======================================================
+           DATA DOCK
+      ======================================================== -->
+
+      <aside
+        class="data-dock"
+        id="dataDock"
+        aria-label="Data controls and filters"
+      >
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">
+              INPUT//CONTROL
+            </p>
+
+            <h2 class="panel-title">
+              Data Dock
+            </h2>
+          </div>
+
+          <button
+            class="icon-button data-dock__close"
+            id="closeDataDockButton"
+            type="button"
+            aria-label="Close data dock"
+          >
+            ×
+          </button>
+        </div>
+
+        <section class="dock-section">
+          <div class="dock-section__heading">
+            <h3>
+              Data ingestion
+            </h3>
+
+            <span>
+              CSV or manual entry
+            </span>
+          </div>
+
+          <input
+            id="csvFileInput"
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+          >
+
+          <div class="button-stack">
+            <button
+              class="button button--primary button--full"
+              id="uploadCsvButton"
+              type="button"
+            >
+              Upload CSV
+            </button>
+
+            <button
+              class="button button--secondary button--full"
+              id="openPasteCsvButton"
+              type="button"
+            >
+              Paste CSV
+            </button>
+
+            <button
+              class="button button--secondary button--full"
+              id="openManualEntryButton"
+              type="button"
+            >
+              Add Auction Manually
+            </button>
+
+            <button
+              class="button button--ghost button--full"
+              id="loadSampleDataButton"
+              type="button"
+            >
+              Load Illustrative Dataset
+            </button>
+
+            <button
+              class="text-button"
+              id="downloadTemplateButton"
+              type="button"
+            >
+              Download CSV template
+            </button>
+          </div>
+
+          <p class="dock-note">
+            Uploaded data is processed locally in your browser and is not
+            transmitted to a server.
+          </p>
+        </section>
+
+        <section class="dock-section">
+          <div class="dock-section__heading">
+            <h3>
+              Market filters
+            </h3>
+
+            <button
+              class="text-button"
+              id="clearFiltersButton"
+              type="button"
+              disabled
+            >
+              Clear filters
+            </button>
+          </div>
+
+          <div class="field-group">
+            <label for="instrumentFilter">
+              Instrument
+            </label>
+
+            <select
+              id="instrumentFilter"
+              disabled
+            >
+              <option value="all">
+                All instruments
+              </option>
+
+              <option value="T-Bill">
+                Treasury bills
+              </option>
+
+              <option value="T-Bond">
+                Treasury bonds
+              </option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="tenorFilter">
+              Tenor
+            </label>
+
+            <select
+              id="tenorFilter"
+              disabled
+            >
+              <option value="all">
+                All tenors
+              </option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label for="awardStatusFilter">
+              Award status
+            </label>
+
+            <select
+              id="awardStatusFilter"
+              disabled
+            >
+              <option value="all">
+                All outcomes
+              </option>
+
+              <option value="full">
+                Full award
+              </option>
+
+              <option value="partial">
+                Partial award
+              </option>
+
+              <option value="none">
+                No award
+              </option>
+            </select>
+          </div>
+
+          <div class="field-grid field-grid--two">
+            <div class="field-group">
+              <label for="startDateFilter">
+                Start date
+              </label>
+
+              <input
+                id="startDateFilter"
+                type="date"
+                disabled
+              >
+            </div>
+
+            <div class="field-group">
+              <label for="endDateFilter">
+                End date
+              </label>
+
+              <input
+                id="endDateFilter"
+                type="date"
+                disabled
+              >
+            </div>
+          </div>
+
+          <button
+            class="button button--primary button--full"
+            id="applyFiltersButton"
+            type="button"
+            disabled
+          >
+            Apply Filters
+          </button>
+        </section>
+
+        <section class="dock-section">
+          <div class="dock-section__heading">
+            <h3>
+              Dataset controls
+            </h3>
+          </div>
+
+          <div class="button-stack">
+            <button
+              class="button button--secondary button--full"
+              id="saveDatasetButton"
+              type="button"
+              disabled
+            >
+              Save in Browser
+            </button>
+
+            <button
+              class="button button--ghost button--full"
+              id="openSavedDatasetsButton"
+              type="button"
+            >
+              Load Saved Dataset
+            </button>
+
+            <button
+              class="button button--ghost button--full"
+              id="exportProcessedCsvButton"
+              type="button"
+              disabled
+            >
+              Export Processed CSV
+            </button>
+
+            <button
+              class="button button--danger button--full"
+              id="clearCurrentDatasetButton"
+              type="button"
+              disabled
+            >
+              Clear Current Dataset
+            </button>
+          </div>
+        </section>
+      </aside>
+
+      <!-- =======================================================
+           CENTRAL MARKET WORKSPACE
+      ======================================================== -->
+
+      <div class="market-workspace">
+
+        <!-- MARKET OVERVIEW -->
+
+        <section
+          class="market-overview"
+          aria-labelledby="marketOverviewTitle"
+        >
+          <div class="market-overview__copy">
+            <p class="panel-kicker">
+              MARKET//DISCOVERY
+            </p>
+
+            <h1 id="marketOverviewTitle">
+              Auction demand, yield formation, and tenor intelligence.
+            </h1>
+
+            <p>
+              Examine how government securities auctions clear by comparing
+              offers, submitted bids, accepted awards, and yield movements
+              across maturities.
+            </p>
+          </div>
+
+          <div
+            class="market-overview__snapshot"
+            aria-label="Current market snapshot"
+          >
+            <article class="snapshot-metric">
+              <span class="snapshot-metric__label">
+                COVER
+              </span>
+
+              <strong
+                class="snapshot-metric__value"
+                id="overviewCoverRatio"
+              >
+                —
+              </strong>
+
+              <span
+                class="snapshot-metric__context"
+                id="overviewCoverContext"
+              >
+                Latest selected auction
+              </span>
+            </article>
+
+            <article class="snapshot-metric">
+              <span class="snapshot-metric__label">
+                YIELD
+              </span>
+
+              <strong
+                class="snapshot-metric__value"
+                id="overviewAcceptedYield"
+              >
+                —
+              </strong>
+
+              <span
+                class="snapshot-metric__context"
+                id="overviewYieldContext"
+              >
+                Accepted auction yield
+              </span>
+            </article>
+
+            <article class="snapshot-metric">
+              <span class="snapshot-metric__label">
+                SHIFT
+              </span>
+
+              <strong
+                class="snapshot-metric__value"
+                id="overviewYieldShift"
+              >
+                —
+              </strong>
+
+              <span
+                class="snapshot-metric__context"
+                id="overviewShiftContext"
+              >
+                Versus previous same-tenor auction
+              </span>
+            </article>
+          </div>
+        </section>
+
+        <!-- AUCTION FLOW -->
+
+        <section
+          class="terminal-panel auction-flow-panel"
+          aria-labelledby="auctionFlowTitle"
+        >
+          <div class="panel-heading panel-heading--with-actions">
+            <div>
+              <p class="panel-kicker">
+                CLEARING//MECHANISM
+              </p>
+
+              <h2
+                class="panel-title"
+                id="auctionFlowTitle"
+              >
+                Auction Flow
+              </h2>
+            </div>
+
+            <div class="panel-selector">
+              <label for="auctionFlowRecordSelect">
+                Observation
+              </label>
+
+              <select
+                id="auctionFlowRecordSelect"
+                disabled
+              >
+                <option value="">
+                  No auction selected
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div
+            class="auction-flow"
+            id="auctionFlow"
+          >
+            <article
+              class="flow-stage flow-stage--offered"
+              data-stage="offered"
+            >
+              <div class="flow-stage__header">
+                <span>
+                  01
+                </span>
+
+                <h3>
+                  Amount Offered
+                </h3>
+              </div>
+
+              <strong
+                class="flow-stage__value"
+                id="flowAmountOffered"
+              >
+                —
+              </strong>
+
+              <div
+                class="flow-stage__bar"
+                aria-hidden="true"
+              >
+                <span id="flowAmountOfferedBar"></span>
+              </div>
+
+              <p>
+                Announced government borrowing amount.
+              </p>
+            </article>
+
+            <div
+              class="flow-connector"
+              aria-hidden="true"
+            >
+              <span></span>
+            </div>
+
+            <article
+              class="flow-stage flow-stage--tendered"
+              data-stage="tendered"
+            >
+              <div class="flow-stage__header">
+                <span>
+                  02
+                </span>
+
+                <h3>
+                  Tenders Received
+                </h3>
+              </div>
+
+              <strong
+                class="flow-stage__value"
+                id="flowTendersReceived"
+              >
+                —
+              </strong>
+
+              <div
+                class="flow-stage__bar"
+                aria-hidden="true"
+              >
+                <span id="flowTendersReceivedBar"></span>
+              </div>
+
+              <p>
+                Total volume submitted by auction participants.
+              </p>
+            </article>
+
+            <div
+              class="flow-connector"
+              aria-hidden="true"
+            >
+              <span></span>
+            </div>
+
+            <article
+              class="flow-stage flow-stage--awarded"
+              data-stage="awarded"
+            >
+              <div class="flow-stage__header">
+                <span>
+                  03
+                </span>
+
+                <h3>
+                  Amount Awarded
+                </h3>
+              </div>
+
+              <strong
+                class="flow-stage__value"
+                id="flowAmountAwarded"
+              >
+                —
+              </strong>
+
+              <div
+                class="flow-stage__bar"
+                aria-hidden="true"
+              >
+                <span id="flowAmountAwardedBar"></span>
+              </div>
+
+              <p>
+                Volume accepted at the auction clearing outcome.
+              </p>
+            </article>
+          </div>
+
+          <div class="auction-flow__metrics">
+            <article class="compact-metric">
+              <span>
+                Bid-to-cover
+              </span>
+
+              <strong id="flowBidToCover">
+                —
+              </strong>
+            </article>
+
+            <article class="compact-metric">
+              <span>
+                Award-to-offer
+              </span>
+
+              <strong id="flowAwardToOffer">
+                —
+              </strong>
+            </article>
+
+            <article class="compact-metric">
+              <span>
+                Bid acceptance
+              </span>
+
+              <strong id="flowAcceptanceRatio">
+                —
+              </strong>
+            </article>
+
+            <article class="compact-metric">
+              <span>
+                Clearing status
+              </span>
+
+              <strong id="flowClearingStatus">
+                —
+              </strong>
+            </article>
+          </div>
+        </section>
+
+        <!-- MARKET CHART -->
+
+        <section
+          class="terminal-panel market-chart-panel"
+          aria-labelledby="marketChartTitle"
+        >
+          <div class="panel-heading panel-heading--with-actions">
+            <div>
+              <p class="panel-kicker">
+                MARKET//MONITOR
+              </p>
+
+              <h2
+                class="panel-title"
+                id="marketChartTitle"
+              >
+                Auction Series
+              </h2>
+            </div>
+
+            <div
+              class="chart-view-controls"
+              role="group"
+              aria-label="Select chart metric"
+            >
+              <button
+                class="chart-view-button is-active"
+                type="button"
+                data-metric="accepted_yield"
+                aria-pressed="true"
+                disabled
+              >
+                Yield
+              </button>
+
+              <button
+                class="chart-view-button"
+                type="button"
+                data-metric="bid_to_cover"
+                aria-pressed="false"
+                disabled
+              >
+                Cover
+              </button>
+
+              <button
+                class="chart-view-button"
+                type="button"
+                data-metric="award_to_offer"
+                aria-pressed="false"
+                disabled
+              >
+                Award
+              </button>
+
+              <button
+                class="chart-view-button"
+                type="button"
+                data-metric="acceptance_ratio"
+                aria-pressed="false"
+                disabled
+              >
+                Acceptance
+              </button>
+
+              <button
+                class="chart-view-button"
+                type="button"
+                data-metric="yield_change_bps"
+                aria-pressed="false"
+                disabled
+              >
+                Yield Shift
+              </button>
+            </div>
+          </div>
+
+          <div class="chart-toolbar">
+            <div class="field-group field-group--inline">
+              <label for="chartTenorSelect">
+                Compare tenor
+              </label>
+
+              <select
+                id="chartTenorSelect"
+                disabled
+              >
+                <option value="all">
+                  All available tenors
+                </option>
+              </select>
+            </div>
+
+            <div
+              class="chart-legend"
+              id="chartLegend"
+              aria-label="Chart legend"
+            ></div>
+          </div>
+
+          <div
+            class="chart-stage"
+            id="chartStage"
+          >
+            <canvas
+              id="marketChart"
+              aria-label="Auction market data chart"
+            ></canvas>
+
+            <div
+              class="chart-empty-state"
+              id="chartEmptyState"
+            >
+              <span class="chart-empty-state__icon">
+                ◇
+              </span>
+
+              <strong>
+                Awaiting auction data
+              </strong>
+
+              <p>
+                Upload a CSV, paste a dataset, enter an auction manually,
+                or load the illustrative sample.
+              </p>
+            </div>
+
+            <div
+              class="chart-tooltip"
+              id="chartTooltip"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></div>
+          </div>
+        </section>
+
+        <!-- SIGNAL ENGINE -->
+
+        <section
+          class="terminal-panel signal-engine-panel"
+          aria-labelledby="signalEngineTitle"
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">
+                RULE//ENGINE
+              </p>
+
+              <h2
+                class="panel-title"
+                id="signalEngineTitle"
+              >
+                Auction Signals
+              </h2>
+            </div>
+
+            <span class="method-badge">
+              DESCRIPTIVE
+            </span>
+          </div>
+
+          <div
+            class="signal-feed"
+            id="signalFeed"
+          >
+            <article class="signal-feed__empty">
+              <span>
+                00
+              </span>
+
+              <p>
+                Signals will appear after the dataset is validated and
+                processed.
+              </p>
+            </article>
+          </div>
+
+          <p class="panel-footnote">
+            Signals are generated using transparent analytical rules. They
+            are not forecasts, investment recommendations, or official
+            government assessments.
+          </p>
+        </section>
+      </div>
+
+      <!-- =======================================================
+           INTELLIGENCE RAIL
+      ======================================================== -->
+
+      <aside
+        class="intelligence-rail"
+        aria-label="Auction intelligence"
+      >
+        <section
+          class="terminal-panel clearing-signal-panel"
+          aria-labelledby="clearingSignalTitle"
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">
+                LATEST//READING
+              </p>
+
+              <h2
+                class="panel-title"
+                id="clearingSignalTitle"
+              >
+                Clearing Signal
+              </h2>
+            </div>
+
+            <span
+              class="signal-light signal-light--idle"
+              id="clearingSignalLight"
+              aria-hidden="true"
+            ></span>
+          </div>
+
+          <div class="clearing-signal">
+            <div class="clearing-signal__classification">
+              <span>
+                DEMAND
+              </span>
+
+              <strong id="clearingDemandSignal">
+                NO SIGNAL
+              </strong>
+            </div>
+
+            <dl class="signal-stat-list">
+              <div>
+                <dt>
+                  Accepted yield
+                </dt>
+
+                <dd id="clearingAcceptedYield">
+                  —
+                </dd>
+              </div>
+
+              <div>
+                <dt>
+                  Yield movement
+                </dt>
+
+                <dd id="clearingYieldMovement">
+                  —
+                </dd>
+              </div>
+
+              <div>
+                <dt>
+                  Bid-to-cover
+                </dt>
+
+                <dd id="clearingBidToCover">
+                  —
+                </dd>
+              </div>
+
+              <div>
+                <dt>
+                  Award outcome
+                </dt>
+
+                <dd id="clearingAwardStatus">
+                  —
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <section
+          class="terminal-panel pressure-panel"
+          aria-labelledby="pressureTitle"
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">
+                DEMAND//PRESSURE
+              </p>
+
+              <h2
+                class="panel-title"
+                id="pressureTitle"
+              >
+                Cover Gauge
+              </h2>
+            </div>
+          </div>
+
+          <div
+            class="pressure-gauge"
+            id="pressureGauge"
+          >
+            <div
+              class="pressure-gauge__track"
+              aria-hidden="true"
+            >
+              <span
+                class="pressure-gauge__fill"
+                id="pressureGaugeFill"
+              ></span>
+            </div>
+
+            <div class="pressure-gauge__scale">
+              <span>
+                THIN
+              </span>
+
+              <span>
+                MODERATE
+              </span>
+
+              <span>
+                STRONG
+              </span>
+            </div>
+
+            <strong
+              class="pressure-gauge__reading"
+              id="pressureGaugeReading"
+            >
+              —
+            </strong>
+          </div>
+        </section>
+
+        <section
+          class="terminal-panel tenor-leaders-panel"
+          aria-labelledby="tenorLeadersTitle"
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">
+                TENOR//RANK
+              </p>
+
+              <h2
+                class="panel-title"
+                id="tenorLeadersTitle"
+              >
+                Demand Leaders
+              </h2>
+            </div>
+          </div>
+
+          <dl class="leader-list">
+            <div>
+              <dt>
+                Strongest demand
+              </dt>
+
+              <dd id="strongestDemandTenor">
+                —
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Weakest demand
+              </dt>
+
+              <dd id="weakestDemandTenor">
+                —
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Largest yield increase
+              </dt>
+
+              <dd id="largestYieldIncreaseTenor">
+                —
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Largest yield decline
+              </dt>
+
+              <dd id="largestYieldDeclineTenor">
+                —
+              </dd>
+            </div>
+          </dl>
+        </section>
+
+        <section
+          class="terminal-panel current-record-panel"
+          aria-labelledby="currentRecordTitle"
+        >
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">
+                RECORD//DETAIL
+              </p>
+
+              <h2
+                class="panel-title"
+                id="currentRecordTitle"
+              >
+                Selected Auction
+              </h2>
+            </div>
+          </div>
+
+          <dl class="record-detail-list">
+            <div>
+              <dt>
+                Auction date
+              </dt>
+
+              <dd id="selectedAuctionDate">
+                —
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Instrument
+              </dt>
+
+              <dd id="selectedInstrument">
+                —
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Tenor
+              </dt>
+
+              <dd id="selectedTenor">
+                —
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Recent average cover
+              </dt>
+
+              <dd id="selectedRecentCover">
+                —
+              </dd>
+            </div>
+
+            <div>
+              <dt>
+                Recent average yield
+              </dt>
+
+              <dd id="selectedRecentYield">
+                —
+              </dd>
+            </div>
+          </dl>
+        </section>
+      </aside>
+
+      <!-- =======================================================
+           TENOR MATRIX
+      ======================================================== -->
+
+      <section
+        class="terminal-panel tenor-matrix-panel"
+        aria-labelledby="tenorMatrixTitle"
+      >
+        <div class="panel-heading panel-heading--with-actions">
+          <div>
+            <p class="panel-kicker">
+              MATURITY//MAP
+            </p>
+
+            <h2
+              class="panel-title"
+              id="tenorMatrixTitle"
+            >
+              Tenor Matrix
+            </h2>
+          </div>
+
+          <div
+            class="matrix-summary"
+            id="matrixSummary"
+          >
+            Latest observation for each available tenor
+          </div>
+        </div>
+
+        <div
+          class="tenor-matrix"
+          id="tenorMatrix"
+        >
+          <article class="tenor-card tenor-card--empty">
+            <span class="tenor-card__code">
+              —
+            </span>
+
+            <strong>
+              No tenor data
+            </strong>
+
+            <p>
+              Load a dataset to generate the maturity map.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- =======================================================
+           AUCTION TABLE
+      ======================================================== -->
+
+      <section
+        class="terminal-panel auction-table-panel"
+        aria-labelledby="auctionTableTitle"
+      >
+        <div class="panel-heading panel-heading--with-actions">
+          <div>
+            <p class="panel-kicker">
+              RECORD//ARCHIVE
+            </p>
+
+            <h2
+              class="panel-title"
+              id="auctionTableTitle"
+            >
+              Auction Table
+            </h2>
+          </div>
+
+          <div class="table-actions">
+            <label
+              class="search-field"
+              for="auctionTableSearch"
+            >
+              <span class="visually-hidden">
+                Search auction records
+              </span>
+
+              <input
+                id="auctionTableSearch"
+                type="search"
+                placeholder="Search records"
+                autocomplete="off"
+                disabled
+              >
+            </label>
+
+            <button
+              class="button button--ghost"
+              id="downloadVisibleTableButton"
+              type="button"
+              disabled
+            >
+              Download View
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="table-status"
+          aria-live="polite"
+        >
+          <span id="visibleRecordCount">
+            0 records displayed
+          </span>
+
+          <span id="tableSortSummary">
+            Sorted by auction date
+          </span>
+        </div>
+
+        <div class="table-scroll">
+          <table id="auctionTable">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="auction_date"
+                    disabled
+                  >
+                    Auction Date
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="instrument_type"
+                    disabled
+                  >
+                    Instrument
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="tenor_days"
+                    disabled
+                  >
+                    Tenor
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="amount_offered"
+                    disabled
+                  >
+                    Offered
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="tenders_received"
+                    disabled
+                  >
+                    Tendered
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="amount_awarded"
+                    disabled
+                  >
+                    Awarded
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="accepted_yield"
+                    disabled
+                  >
+                    Yield
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="yield_change_bps"
+                    disabled
+                  >
+                    Shift
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="bid_to_cover"
+                    disabled
+                  >
+                    Cover
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="award_to_offer"
+                    disabled
+                  >
+                    Award Ratio
+                  </button>
+                </th>
+
+                <th scope="col">
+                  <button
+                    class="table-sort-button"
+                    type="button"
+                    data-sort-key="acceptance_ratio"
+                    disabled
+                  >
+                    Acceptance
+                  </button>
+                </th>
+
+                <th scope="col">
+                  Status
+                </th>
+
+                <th scope="col">
+                  Signal
+                </th>
+              </tr>
+            </thead>
+
+            <tbody id="auctionTableBody">
+              <tr class="table-empty-row">
+                <td colspan="13">
+                  No auction records loaded.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- =======================================================
+           METHODOLOGY
+      ======================================================== -->
+
+      <section
+        class="terminal-panel methodology-panel"
+        aria-labelledby="methodologyTitle"
+      >
+        <div class="panel-heading">
+          <div>
+            <p class="panel-kicker">
+              MODEL//DISCLOSURE
+            </p>
+
+            <h2
+              class="panel-title"
+              id="methodologyTitle"
+            >
+              Methodology and Interpretation
+            </h2>
+          </div>
+
+          <span class="method-badge">
+            TRANSPARENT RULES
+          </span>
+        </div>
+
+        <div class="methodology-grid">
+          <article>
+            <h3>
+              Bid-to-cover ratio
+            </h3>
+
+            <p>
+              Tenders received divided by the announced amount offered. It
+              measures submitted demand relative to the government’s planned
+              issuance volume.
+            </p>
+          </article>
+
+          <article>
+            <h3>
+              Award-to-offer ratio
+            </h3>
+
+            <p>
+              Amount awarded divided by amount offered. It measures how much
+              of the planned auction volume was accepted.
+            </p>
+          </article>
+
+          <article>
+            <h3>
+              Bid acceptance ratio
+            </h3>
+
+            <p>
+              Amount awarded divided by tenders received. It measures the
+              share of submitted bids that was ultimately accepted.
+            </p>
+          </article>
+
+          <article>
+            <h3>
+              Yield movement
+            </h3>
+
+            <p>
+              The accepted yield is compared with the previous recorded
+              auction for the same tenor and expressed in basis points.
+            </p>
+          </article>
+        </div>
+
+        <details class="methodology-details">
+          <summary>
+            Demand-signal thresholds
+          </summary>
+
+          <div class="threshold-grid">
+            <div>
+              <strong>
+                Below 1.00×
+              </strong>
+
+              <span>
+                Undersubscribed
+              </span>
+            </div>
+
+            <div>
+              <strong>
+                1.00×–1.24×
+              </strong>
+
+              <span>
+                Thin demand
+              </span>
+            </div>
+
+            <div>
+              <strong>
+                1.25×–1.99×
+              </strong>
+
+              <span>
+                Moderate demand
+              </span>
+            </div>
+
+            <div>
+              <strong>
+                2.00× and above
+              </strong>
+
+              <span>
+                Strong demand
+              </span>
+            </div>
+          </div>
+        </details>
+
+        <details class="methodology-details">
+          <summary>
+            Limitations
+          </summary>
+
+          <div class="methodology-copy">
+            <p>
+              Auction demand indicators do not independently measure investor
+              sentiment, market liquidity, policy expectations, or debt
+              sustainability. Results depend on the completeness and
+              consistency of the uploaded dataset.
+            </p>
+
+            <p>
+              CLEARING//POINT is an analytical and educational tool. It does
+              not provide investment advice, official auction assessments, or
+              real-time market data.
+            </p>
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <!-- =========================================================
+         FOOTER
+    ========================================================== -->
+
+    <footer class="tool-footer">
+      <div>
+        <strong>
+          CLEARING//POINT
+        </strong>
+
+        <span>
+          Auction demand, yield formation, and tenor intelligence.
+        </span>
+      </div>
+
+      <div class="tool-footer__meta">
+        <span>
+          Prototype v0.1
+        </span>
+
+        <span>
+          Browser-based
+        </span>
+
+        <span>
+          Local processing
+        </span>
+
+        <a href="../projects.html">
+          Return to Work
+        </a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===========================================================
+       PASTE CSV DIALOG
+  ============================================================ -->
+
+  <dialog
+    class="modal"
+    id="pasteCsvDialog"
+  >
+    <form
+      class="modal__surface"
+      id="pasteCsvForm"
+      method="dialog"
+    >
+      <div class="modal__header">
+        <div>
+          <p class="panel-kicker">
+            DATA//PASTE
+          </p>
+
+          <h2>
+            Paste CSV Data
+          </h2>
+        </div>
+
+        <button
+          class="icon-button"
+          type="submit"
+          value="cancel"
+          aria-label="Close paste CSV dialog"
+        >
+          ×
+        </button>
+      </div>
+
+      <label
+        class="field-group"
+        for="pastedCsvInput"
+      >
+        <span>
+          CSV content
+        </span>
+
+        <textarea
+          id="pastedCsvInput"
+          rows="14"
+          spellcheck="false"
+          placeholder="auction_date,instrument_type,tenor,tenor_days,amount_offered,tenders_received,amount_awarded,accepted_yield"
+        ></textarea>
+      </label>
+
+      <div
+        class="validation-message"
+        id="pasteCsvValidationMessage"
+        aria-live="polite"
+      ></div>
+
+      <div class="modal__actions">
+        <button
+          class="button button--ghost"
+          type="submit"
+          value="cancel"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="button button--primary"
+          id="processPastedCsvButton"
+          type="button"
+        >
+          Process Data
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===========================================================
+       MANUAL ENTRY DIALOG
+  ============================================================ -->
+
+  <dialog
+    class="modal"
+    id="manualEntryDialog"
+  >
+    <form
+      class="modal__surface"
+      id="manualEntryForm"
+    >
+      <div class="modal__header">
+        <div>
+          <p class="panel-kicker">
+            RECORD//ENTRY
+          </p>
+
+          <h2>
+            Add Auction Record
+          </h2>
+        </div>
+
+        <button
+          class="icon-button"
+          id="closeManualEntryButton"
+          type="button"
+          aria-label="Close manual entry dialog"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="field-grid field-grid--two">
+        <label class="field-group">
+          <span>
+            Auction date
+          </span>
+
+          <input
+            id="manualAuctionDate"
+            name="auction_date"
+            type="date"
+            required
+          >
+        </label>
+
+        <label class="field-group">
+          <span>
+            Instrument type
+          </span>
+
+          <select
+            id="manualInstrumentType"
+            name="instrument_type"
+            required
+          >
+            <option value="">
+              Select instrument
+            </option>
+
+            <option value="T-Bill">
+              Treasury bill
+            </option>
+
+            <option value="T-Bond">
+              Treasury bond
+            </option>
+          </select>
+        </label>
+
+        <label class="field-group">
+          <span>
+            Tenor label
+          </span>
+
+          <input
+            id="manualTenor"
+            name="tenor"
+            type="text"
+            placeholder="91-day"
+            required
+          >
+        </label>
+
+        <label class="field-group">
+          <span>
+            Tenor in days
+          </span>
+
+          <input
+            id="manualTenorDays"
+            name="tenor_days"
+            type="number"
+            min="1"
+            step="1"
+            placeholder="91"
+            required
+          >
+        </label>
+
+        <label class="field-group">
+          <span>
+            Amount offered
+          </span>
+
+          <input
+            id="manualAmountOffered"
+            name="amount_offered"
+            type="number"
+            min="0.01"
+            step="any"
+            placeholder="7000"
+            required
+          >
+        </label>
+
+        <label class="field-group">
+          <span>
+            Tenders received
+          </span>
+
+          <input
+            id="manualTendersReceived"
+            name="tenders_received"
+            type="number"
+            min="0"
+            step="any"
+            placeholder="16320"
+            required
+          >
+        </label>
+
+        <label class="field-group">
+          <span>
+            Amount awarded
+          </span>
+
+          <input
+            id="manualAmountAwarded"
+            name="amount_awarded"
+            type="number"
+            min="0"
+            step="any"
+            placeholder="7000"
+            required
+          >
+        </label>
+
+        <label class="field-group">
+          <span>
+            Accepted yield (%)
+          </span>
+
+          <input
+            id="manualAcceptedYield"
+            name="accepted_yield"
+            type="number"
+            step="0.001"
+            placeholder="5.712"
+            required
+          >
+        </label>
+      </div>
+
+      <p class="dock-note">
+        Use one consistent unit for all amount fields, such as millions of
+        Philippine pesos.
+      </p>
+
+      <div
+        class="validation-message"
+        id="manualEntryValidationMessage"
+        aria-live="polite"
+      ></div>
+
+      <div class="modal__actions">
+        <button
+          class="button button--ghost"
+          id="cancelManualEntryButton"
+          type="button"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="button button--primary"
+          type="submit"
+        >
+          Add Record
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===========================================================
+       SAVE DATASET DIALOG
+  ============================================================ -->
+
+  <dialog
+    class="modal modal--compact"
+    id="saveDatasetDialog"
+  >
+    <form
+      class="modal__surface"
+      id="saveDatasetForm"
+    >
+      <div class="modal__header">
+        <div>
+          <p class="panel-kicker">
+            LOCAL//SAVE
+          </p>
+
+          <h2>
+            Save Dataset
+          </h2>
+        </div>
+
+        <button
+          class="icon-button"
+          id="closeSaveDatasetButton"
+          type="button"
+          aria-label="Close save dataset dialog"
+        >
+          ×
+        </button>
+      </div>
+
+      <label
+        class="field-group"
+        for="datasetNameInput"
+      >
+        <span>
+          Dataset name
+        </span>
+
+        <input
+          id="datasetNameInput"
+          type="text"
+          maxlength="80"
+          placeholder="Philippine T-bill auctions — 2026"
+          required
+        >
+      </label>
+
+      <div
+        class="validation-message"
+        id="saveDatasetValidationMessage"
+        aria-live="polite"
+      ></div>
+
+      <div class="modal__actions">
+        <button
+          class="button button--ghost"
+          id="cancelSaveDatasetButton"
+          type="button"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="button button--primary"
+          type="submit"
+        >
+          Save Dataset
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===========================================================
+       DATASET MANAGER DIALOG
+  ============================================================ -->
+
+  <dialog
+    class="modal"
+    id="datasetManagerDialog"
+  >
+    <div class="modal__surface">
+      <div class="modal__header">
+        <div>
+          <p class="panel-kicker">
+            LOCAL//ARCHIVE
+          </p>
+
+          <h2>
+            Saved Datasets
+          </h2>
+        </div>
+
+        <button
+          class="icon-button"
+          id="closeDatasetManagerButton"
+          type="button"
+          aria-label="Close dataset manager"
+        >
+          ×
+        </button>
+      </div>
+
+      <div
+        class="saved-dataset-list"
+        id="savedDatasetList"
+      >
+        <div class="saved-dataset-list__empty">
+          No datasets have been saved in this browser.
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ===========================================================
+       CONFIRMATION DIALOG
+  ============================================================ -->
+
+  <dialog
+    class="modal modal--compact"
+    id="confirmationDialog"
+  >
+    <div class="modal__surface">
+      <div class="modal__header">
+        <div>
+          <p class="panel-kicker">
+            SYSTEM//CONFIRM
+          </p>
+
+          <h2 id="confirmationTitle">
+            Confirm action
+          </h2>
+        </div>
+      </div>
+
+      <p
+        class="confirmation-copy"
+        id="confirmationMessage"
+      >
+        This action cannot be undone.
+      </p>
+
+      <div class="modal__actions">
+        <button
+          class="button button--ghost"
+          id="confirmationCancelButton"
+          type="button"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="button button--danger"
+          id="confirmationProceedButton"
+          type="button"
+        >
+          Confirm
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ===========================================================
+       TOAST AND ACCESSIBILITY OUTPUT
+  ============================================================ -->
+
+  <div
+    class="toast-region"
+    id="toastRegion"
+    aria-live="polite"
+    aria-atomic="true"
+  ></div>
+
+  <div
+    class="visually-hidden"
+    id="screenReaderStatus"
+    aria-live="polite"
+  ></div>
+
+  <!-- ===========================================================
+       JAVASCRIPT TEMPLATES
+  ============================================================ -->
+
+  <template id="auctionTapeItemTemplate">
+    <article class="auction-tape-item">
+      <strong data-field="tenor">
+        —
+      </strong>
+
+      <span data-field="yield">
+        —
+      </span>
+
+      <span data-field="shift">
+        —
+      </span>
+
+      <span data-field="cover">
+        —
+      </span>
+
+      <span data-field="status">
+        —
+      </span>
+    </article>
+  </template>
+
+  <template id="tenorCardTemplate">
+    <article class="tenor-card">
+      <div class="tenor-card__header">
+        <span
+          class="tenor-card__code"
+          data-field="tenor"
+        >
+          —
+        </span>
+
+        <span
+          class="tenor-card__signal"
+          data-field="signal"
+        >
+          —
+        </span>
+      </div>
+
+      <strong
+        class="tenor-card__yield"
+        data-field="yield"
+      >
+        —
+      </strong>
+
+      <dl class="tenor-card__metrics">
+        <div>
+          <dt>
+            Shift
+          </dt>
+
+          <dd data-field="shift">
+            —
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            Cover
+          </dt>
+
+          <dd data-field="cover">
+            —
+          </dd>
+        </div>
+
+        <div>
+          <dt>
+            Award
+          </dt>
+
+          <dd data-field="award">
+            —
+          </dd>
+        </div>
+      </dl>
+    </article>
+  </template>
+
+  <template id="signalFeedItemTemplate">
+    <article class="signal-feed__item">
+      <span
+        class="signal-feed__index"
+        data-field="index"
+      >
+        01
+      </span>
+
+      <div>
+        <strong data-field="title">
+          Signal
+        </strong>
+
+        <p data-field="message">
+          Signal description.
+        </p>
+      </div>
+    </article>
+  </template>
+
+  <template id="savedDatasetItemTemplate">
+    <article class="saved-dataset-item">
+      <div>
+        <strong data-field="name">
+          Dataset
+        </strong>
+
+        <span data-field="meta">
+          0 records
+        </span>
+      </div>
+
+      <div class="saved-dataset-item__actions">
+        <button
+          class="button button--secondary"
+          type="button"
+          data-action="load"
+        >
+          Load
+        </button>
+
+        <button
+          class="button button--danger"
+          type="button"
+          data-action="delete"
+        >
+          Delete
+        </button>
+      </div>
+    </article>
+  </template>
+</body>
+</html>
