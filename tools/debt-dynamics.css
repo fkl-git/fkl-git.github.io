@@ -2388,3 +2388,50 @@ body[data-contrast="high"] {
     color: black;
   }
 }
+
+/* =========================================================
+   SAVED SCENARIO ACTIONS
+========================================================= */
+
+.saved-scenario-actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.saved-scenario-actions button {
+  min-height: 31px;
+  padding: 6px 9px;
+
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.saved-scenario-load:hover {
+  border-color: var(--cyan);
+  background: var(--cyan-soft);
+  color: #bae6fd;
+}
+
+.saved-scenario-rename:hover {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+  color: #fde68a;
+}
+
+.saved-scenario-delete:hover {
+  border-color: var(--red);
+  background: var(--red-soft);
+  color: #fecaca;
+}
+
+@media (max-width: 560px) {
+  .saved-scenario-item {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-scenario-actions {
+    justify-content: flex-start;
+  }
+}
