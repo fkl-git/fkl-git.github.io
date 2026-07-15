@@ -7,25 +7,80 @@
 
   <meta
     name="description"
-    content="FISCAL//COMMAND is an interactive debt-dynamics and fiscal-risk modelling tool by Josh Michael Luistro."
+    content="FISCAL//COMMAND is an interactive sovereign debt-dynamics model for comparing fiscal scenarios, debt trajectories, primary-balance requirements, and interest burdens."
   >
 
   <meta name="author" content="Josh Michael Luistro">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#050608">
+
+  <link
+    rel="canonical"
+    href="https://joshmichaelluistro.com/tools/debt-dynamics.html"
+  >
+
+  <meta
+    property="og:title"
+    content="FISCAL//COMMAND: Debt Dynamics Lab"
+  >
+
+  <meta
+    property="og:description"
+    content="An interactive browser-based model for projecting sovereign debt under baseline, favorable, and adverse fiscal scenarios."
+  >
+
+  <meta property="og:type" content="website">
+
+  <meta
+    property="og:url"
+    content="https://joshmichaelluistro.com/tools/debt-dynamics.html"
+  >
+
+  <meta property="og:site_name" content="Josh Michael Luistro">
+
+  <meta name="twitter:card" content="summary">
+
+  <meta
+    name="twitter:title"
+    content="FISCAL//COMMAND: Debt Dynamics Lab"
+  >
+
+  <meta
+    name="twitter:description"
+    content="Model debt trajectories, fiscal shocks, stabilizing primary balances, and interest burdens directly in the browser."
+  >
 
   <title>FISCAL//COMMAND | Debt Dynamics Lab</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<link
-  href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
-  rel="stylesheet"
->
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
 
-<link rel="stylesheet" href="debt-dynamics.css">
-  
   <link rel="stylesheet" href="debt-dynamics.css">
   <script src="debt-dynamics.js" defer></script>
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "FISCAL//COMMAND: Debt Dynamics Lab",
+      "url": "https://joshmichaelluistro.com/tools/debt-dynamics.html",
+      "description": "An interactive sovereign debt-dynamics model for comparing fiscal scenarios, debt trajectories, primary-balance requirements, and interest burdens.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript and a modern web browser.",
+      "softwareVersion": "1.0",
+      "creator": {
+        "@type": "Person",
+        "name": "Josh Michael Luistro",
+        "url": "https://joshmichaelluistro.com/"
+      }
+    }
+  </script>
 </head>
 
 <body>
@@ -173,6 +228,94 @@
           Not calculated
         </output>
       </div>
+    </section>
+
+    <!-- =====================================================
+         QUICK-START GUIDE
+    ====================================================== -->
+
+    <section
+      class="panel quickstart-panel"
+      aria-labelledby="quickstart-heading"
+    >
+      <details>
+        <summary>
+          <span>
+            <span class="panel-kicker">Operating Guide</span>
+            <span id="quickstart-heading" class="quickstart-title">
+              How to use this model
+            </span>
+          </span>
+
+          <span class="quickstart-status" aria-hidden="true">
+            GUIDE//OPEN
+          </span>
+        </summary>
+
+        <div class="quickstart-content">
+          <ol class="quickstart-steps">
+            <li>
+              <strong>Enter the baseline.</strong>
+              Set the starting debt ratio, growth, inflation, effective
+              interest rate, primary balance, revenue ratio, and projection
+              period.
+            </li>
+
+            <li>
+              <strong>Run the model.</strong>
+              The dashboard will calculate baseline, favorable, and adverse
+              debt paths using the same core debt-dynamics equation.
+            </li>
+
+            <li>
+              <strong>Compare scenarios.</strong>
+              Use the scenario tabs to update the chart, fiscal signals,
+              driver analysis, risk flags, and annual projection table.
+            </li>
+
+            <li>
+              <strong>Apply stress assumptions.</strong>
+              Open Advanced Scenario Controls to introduce temporary growth,
+              interest-rate, primary-balance, debt, or exchange-rate shocks.
+            </li>
+
+            <li>
+              <strong>Save or export the results.</strong>
+              Scenarios can be stored in the current browser, exported as CSV,
+              or printed as an analytical report.
+            </li>
+          </ol>
+
+          <div class="quickstart-notes">
+            <article>
+              <p class="quickstart-label">Primary-balance convention</p>
+
+              <p>
+                A positive value represents a primary surplus. A negative value
+                represents a primary deficit.
+              </p>
+            </article>
+
+            <article>
+              <p class="quickstart-label">Scenario interpretation</p>
+
+              <p>
+                Favorable and adverse paths are mechanical sensitivity
+                scenarios. They are not forecasts or assigned probabilities.
+              </p>
+            </article>
+
+            <article>
+              <p class="quickstart-label">Storage</p>
+
+              <p>
+                Saved scenarios remain only in this browser and do not sync
+                between devices.
+              </p>
+            </article>
+          </div>
+        </div>
+      </details>
     </section>
 
     <!-- =====================================================
@@ -1456,13 +1599,162 @@
             </p>
           </section>
 
-          <section>
-            <h2>Scenario Interpretation</h2>
+                  <section>
+            <h2>Primary-Balance Convention</h2>
 
             <p>
-              The favorable and adverse paths are mechanical scenarios based on
-              visible adjustments to the baseline assumptions. They are not
-              probability-weighted forecasts.
+              A primary surplus is entered as a positive value and reduces the
+              projected debt ratio. A primary deficit is entered as a negative
+              value and increases the projected debt ratio, all else equal.
+            </p>
+
+            <p>
+              Interest payments are excluded from the primary balance because
+              their effect is already represented through the effective
+              interest-rate term in the debt-dynamics equation.
+            </p>
+          </section>
+
+          <section>
+            <h2>Scenario Construction</h2>
+
+            <p>
+              The baseline path uses the assumptions entered by the user.
+              The favorable scenario adjusts growth, interest rates, and the
+              primary balance according to the values entered under Favorable
+              Scenario Adjustments.
+            </p>
+
+            <p>
+              The adverse scenario applies temporary growth, interest-rate,
+              and primary-balance shocks during the selected shock window.
+              A one-time debt shock is applied only in the first shock year.
+            </p>
+
+            <p>
+              These paths are deterministic sensitivity scenarios. They are not
+              probability-weighted forecasts and do not estimate the likelihood
+              of any outcome.
+            </p>
+          </section>
+
+          <section>
+            <h2>Debt-Stabilizing Primary Balance</h2>
+
+            <p>
+              The debt-stabilizing primary balance is the balance that keeps the
+              debt-to-GDP ratio unchanged under the initial growth, interest-rate,
+              and recurring stock-flow assumptions.
+            </p>
+
+            <p class="equation">
+              pb* =
+              ((i − g) / (1 + g))
+              × d
+              + s
+            </p>
+
+            <p>
+              The reported primary-balance gap compares the entered balance with
+              this stabilizing requirement. A positive gap indicates that the
+              entered balance is stronger than the calculated requirement.
+            </p>
+          </section>
+
+          <section>
+            <h2>Target-Reaching Primary Balance</h2>
+
+            <p>
+              The target-reaching primary balance is the constant annual primary
+              balance that would mechanically produce the selected target debt
+              ratio by the end of the projection.
+            </p>
+
+            <p>
+              The model estimates this value numerically while preserving the
+              selected scenario’s growth, interest-rate, and stock-flow
+              assumptions.
+            </p>
+          </section>
+
+          <section>
+            <h2>Interest Burden</h2>
+
+            <p>
+              Interest expense as a share of GDP is approximated by multiplying
+              the effective nominal interest rate by the opening debt ratio.
+            </p>
+
+            <p class="equation">
+              Interest / GDP =
+              i × d<sub>t−1</sub>
+            </p>
+
+            <p>
+              Interest expense as a share of revenue divides this result by the
+              government revenue-to-GDP ratio entered by the user.
+            </p>
+          </section>
+
+          <section>
+            <h2>Foreign-Currency Valuation Effect</h2>
+
+            <p>
+              In the adverse scenario, the model can approximate the direct
+              increase in the domestic-currency value of foreign-currency debt
+              following an exchange-rate depreciation.
+            </p>
+
+            <p class="equation">
+              Valuation effect =
+              Opening debt
+              × foreign-currency share
+              × depreciation
+            </p>
+
+            <p>
+              This is added to the stock-flow adjustment in the first shock year.
+              It is a simplified accounting approximation and does not model
+              hedging, currency composition, repayment schedules, or indirect
+              macroeconomic effects.
+            </p>
+          </section>
+
+          <section>
+            <h2>Trajectory Signal</h2>
+
+            <p>
+              The model assigns a descriptive trajectory label according to the
+              change between starting and final debt:
+            </p>
+
+            <ul>
+              <li>
+                <strong>Improving:</strong>
+                debt declines by at least 5 percentage points.
+              </li>
+
+              <li>
+                <strong>Broadly stable:</strong>
+                debt changes by more than −5 but no more than +2 percentage
+                points.
+              </li>
+
+              <li>
+                <strong>Rising:</strong>
+                debt increases by more than 2 but no more than 10 percentage
+                points.
+              </li>
+
+              <li>
+                <strong>Rapidly rising:</strong>
+                debt increases by more than 10 percentage points.
+              </li>
+            </ul>
+
+            <p>
+              This is a mechanical model classification. It is not a sovereign
+              credit rating, crisis indicator, or official risk assessment.
             </p>
           </section>
 
@@ -1471,23 +1763,35 @@
 
             <ul>
               <li>
-                The model uses simplified annual assumptions.
+                The model uses simplified annual assumptions and does not
+                estimate uncertainty around them.
               </li>
 
               <li>
-                It does not model the full maturity structure of government debt.
+                It does not model the complete maturity, currency, holder, or
+                instrument structure of government debt.
               </li>
 
               <li>
-                It does not estimate market access or rollover risk directly.
+                It does not directly estimate refinancing risk, market access,
+                contingent liabilities, feedback effects, or fiscal reaction
+                functions.
               </li>
 
               <li>
-                It does not constitute an official debt-sustainability analysis.
+                Interest costs are approximated using an effective average rate
+                rather than a detailed debt-service schedule.
               </li>
 
               <li>
-                Results depend entirely on the assumptions entered by the user.
+                Favorable and adverse scenarios are user-defined sensitivities,
+                not probabilistic forecasts.
+              </li>
+
+              <li>
+                Results depend entirely on the assumptions entered and should be
+                interpreted alongside institutional and country-specific
+                evidence.
               </li>
             </ul>
           </section>
@@ -1516,7 +1820,9 @@
       <div>
         <span>Built by Josh Michael Luistro</span>
         <span aria-hidden="true">·</span>
-        <span id="model-version">Core Model v1.0</span>
+       <span id="model-version">Core Model v1.0</span>
+<span aria-hidden="true">·</span>
+<span>Updated July 2026</span>
       </div>
     </footer>
   </div>
