@@ -199,16 +199,14 @@ announcer: document.getElementById("model-announcer"),
 });
 
     elements.printButton.addEventListener("click", () => {
-  if (state.isDirty) {
-    const modelSucceeded = runModel();
+  const modelSucceeded = runModel();
 
-    if (!modelSucceeded) {
-      announce(
-        "Correct the model inputs before printing the report."
-      );
+  if (!modelSucceeded) {
+    announce(
+      "Correct the model inputs before printing the report."
+    );
 
-      return;
-    }
+    return;
   }
 
   window.print();
@@ -247,13 +245,19 @@ elements.loadButton.addEventListener("click", () => {
   }
 
   function syncGrowthMode() {
-    const mode = getGrowthMode();
-    const useComponents = mode === "components";
+  const mode = getGrowthMode();
+  const useComponents = mode === "components";
 
-    elements.growthComponentFields.hidden = !useComponents;
-    elements.directGrowthField.hidden = useComponents;
-    elements.directGrowthInput.disabled = useComponents;
-  }
+  const realGrowthInput = document.getElementById("real-growth");
+  const inflationInput = document.getElementById("inflation-rate");
+
+  elements.growthComponentFields.hidden = !useComponents;
+  elements.directGrowthField.hidden = useComponents;
+
+  elements.directGrowthInput.disabled = useComponents;
+  realGrowthInput.disabled = !useComponents;
+  inflationInput.disabled = !useComponents;
+}
 
   function updateCalculatedNominalGrowth() {
     const mode = getGrowthMode();
@@ -381,89 +385,152 @@ elements.loadButton.addEventListener("click", () => {
     };
   }
 
-  function validateInputs(inputs) {
-    const errors = [];
+function validateInputs(inputs) {
+  const errors = [];
 
-    Object.entries(inputs).forEach(([key, value]) => {
-  const ignoredKeys = new Set([
-    "growthMode",
-    "nominalGrowth",
-  ]);
+  const requiredFields = [
+    ["baseYear", "Base year"],
+    ["projectionHorizon", "Projection horizon"],
+    ["startingDebt", "Starting debt-to-GDP"],
+    ["targetDebt", "Target debt-to-GDP"],
+    ["effectiveInterestRate", "Effective nominal interest rate"],
+    ["primaryBalance", "Primary balance"],
+    ["revenueRatio", "Government revenue"],
+    ["annualStockFlow", "Annual stock-flow adjustment"],
 
-  if (
-    inputs.growthMode === "components" &&
-    key === "directNominalGrowth"
-  ) {
-    ignoredKeys.add(key);
+    [
+      "favorableGrowthAdjustment",
+      "Favorable growth adjustment",
+    ],
+    [
+      "favorableRateAdjustment",
+      "Favorable interest-rate adjustment",
+    ],
+    [
+      "favorablePrimaryAdjustment",
+      "Favorable primary-balance adjustment",
+    ],
+
+    ["adverseGrowthShock", "Adverse growth shock"],
+    ["adverseRateShock", "Adverse interest-rate shock"],
+    ["adversePrimaryShock", "Adverse primary-balance shock"],
+    ["adverseStockFlowShock", "One-time debt shock"],
+
+    ["shockStartYear", "Shock start year"],
+    ["shockDuration", "Shock duration"],
+
+    ["foreignCurrencyShare", "Foreign-currency debt share"],
+    ["depreciationShock", "Exchange-rate depreciation"],
+  ];
+
+  if (inputs.growthMode === "components") {
+    requiredFields.push(
+      ["realGrowth", "Real GDP growth"],
+      ["inflation", "GDP deflator or inflation"]
+    );
+  } else {
+    requiredFields.push([
+      "directNominalGrowth",
+      "Direct nominal GDP growth",
+    ]);
   }
 
-  if (
-    inputs.growthMode === "direct" &&
-    (key === "realGrowth" || key === "inflation")
-  ) {
-    ignoredKeys.add(key);
-  }
+  requiredFields.forEach(([key, label]) => {
+    if (!Number.isFinite(inputs[key])) {
+      errors.push(`A valid number is required for ${label}.`);
+    }
+  });
 
-  if (ignoredKeys.has(key)) {
-    return;
-  }
-
-  if (!Number.isFinite(value)) {
+  if (!Number.isFinite(inputs.nominalGrowth)) {
     errors.push(
-      `A valid number is required for ${formatInputName(key)}.`
+      "Nominal GDP growth could not be calculated from the active growth inputs."
     );
   }
-});
 
-    if (inputs.baseYear < 1900 || inputs.baseYear > 2200) {
-      errors.push("Base year must be between 1900 and 2200.");
-    }
+  if (
+    Number.isFinite(inputs.baseYear) &&
+    (inputs.baseYear < 1900 || inputs.baseYear > 2200)
+  ) {
+    errors.push("Base year must be between 1900 and 2200.");
+  }
 
-    if (
+  if (
+    Number.isFinite(inputs.projectionHorizon) &&
+    (
       inputs.projectionHorizon < 5 ||
       inputs.projectionHorizon > 20
-    ) {
-      errors.push(
-        "Projection horizon must be between 5 and 20 years."
-      );
-    }
+    )
+  ) {
+    errors.push(
+      "Projection horizon must be between 5 and 20 years."
+    );
+  }
 
-    if (inputs.startingDebt < 0) {
-      errors.push("Starting debt cannot be negative.");
-    }
+  if (
+    Number.isFinite(inputs.startingDebt) &&
+    inputs.startingDebt < 0
+  ) {
+    errors.push("Starting debt cannot be negative.");
+  }
 
-    if (inputs.targetDebt < 0) {
-      errors.push("Target debt cannot be negative.");
-    }
+  if (
+    Number.isFinite(inputs.targetDebt) &&
+    inputs.targetDebt < 0
+  ) {
+    errors.push("Target debt cannot be negative.");
+  }
 
-    if (inputs.revenueRatio <= 0) {
-      errors.push(
-        "Government revenue must be greater than zero."
-      );
-    }
+  if (
+    Number.isFinite(inputs.revenueRatio) &&
+    inputs.revenueRatio <= 0
+  ) {
+    errors.push(
+      "Government revenue must be greater than zero."
+    );
+  }
 
-    if (inputs.foreignCurrencyShare < 0 ||
-        inputs.foreignCurrencyShare > 100) {
-      errors.push(
-        "Foreign-currency debt share must be between 0% and 100%."
-      );
-    }
+  if (
+    Number.isFinite(inputs.foreignCurrencyShare) &&
+    (
+      inputs.foreignCurrencyShare < 0 ||
+      inputs.foreignCurrencyShare > 100
+    )
+  ) {
+    errors.push(
+      "Foreign-currency debt share must be between 0% and 100%."
+    );
+  }
 
-    if (
+  if (
+    Number.isFinite(inputs.shockStartYear) &&
+    Number.isFinite(inputs.projectionHorizon) &&
+    (
       inputs.shockStartYear < 1 ||
       inputs.shockStartYear > inputs.projectionHorizon
-    ) {
-      errors.push(
-        "Shock start year must fall within the projection horizon."
-      );
-    }
+    )
+  ) {
+    errors.push(
+      "Shock start year must fall within the projection horizon."
+    );
+  }
 
-    if (
+  if (
+    Number.isFinite(inputs.shockDuration) &&
+    Number.isFinite(inputs.projectionHorizon) &&
+    (
       inputs.shockDuration < 1 ||
       inputs.shockDuration > inputs.projectionHorizon
-    ) {
+    )
+  ) {
+    errors.push(
+      "Shock duration must be between 1 year and the projection horizon."
+    );
+  }
+
+  if (Number.isFinite(inputs.nominalGrowth)) {
+    if (inputs.nominalGrowth <= -99.9) {
       errors.push(
-        "Shock duration must be between 1 year and the projection horizon."
+        "Baseline nominal growth must remain above -100%."
       );
     }
 
@@ -471,29 +538,31 @@ elements.loadButton.addEventListener("click", () => {
       inputs.nominalGrowth +
       inputs.favorableGrowthAdjustment;
 
-    const adverseGrowth =
-      inputs.nominalGrowth + inputs.adverseGrowthShock;
-
-    if (inputs.nominalGrowth <= -99.9) {
-      errors.push(
-        "Baseline nominal growth must remain above -100%."
-      );
-    }
-
-    if (favorableGrowth <= -99.9) {
+    if (
+      Number.isFinite(favorableGrowth) &&
+      favorableGrowth <= -99.9
+    ) {
       errors.push(
         "Favorable nominal growth must remain above -100%."
       );
     }
 
-    if (adverseGrowth <= -99.9) {
+    const adverseGrowth =
+      inputs.nominalGrowth +
+      inputs.adverseGrowthShock;
+
+    if (
+      Number.isFinite(adverseGrowth) &&
+      adverseGrowth <= -99.9
+    ) {
       errors.push(
         "Adverse nominal growth must remain above -100%."
       );
     }
-
-    return errors;
   }
+
+  return errors;
+}
 
   function showValidationErrors(errors) {
     elements.validationErrors.replaceChildren();
@@ -2321,7 +2390,6 @@ function formatSavedDate(dateValue) {
   */
 
   function exportSelectedCSV() {
-    if (!state.results || state.isDirty) {
   const modelSucceeded = runModel();
 
   if (!modelSucceeded) {
@@ -2331,65 +2399,64 @@ function formatSavedDate(dateValue) {
 
     return;
   }
+
+  const scenarioKey = elements.tableScenario.value;
+
+  const scenario =
+    state.results.scenarios[scenarioKey] ||
+    state.results.scenarios.baseline;
+
+  const headers = [
+    "Year",
+    "Opening Debt (% GDP)",
+    "Nominal Growth (%)",
+    "Effective Interest Rate (%)",
+    "Primary Balance (% GDP)",
+    "Stock-Flow Adjustment (% GDP)",
+    "Interest Expense (% GDP)",
+    "Interest Expense (% Revenue)",
+    "Closing Debt (% GDP)",
+  ];
+
+  const rows = scenario.rows.map((row) => [
+    row.year,
+    row.openingDebt.toFixed(4),
+    row.nominalGrowth.toFixed(4),
+    row.effectiveRate.toFixed(4),
+    row.primaryBalance.toFixed(4),
+    row.stockFlowAdjustment.toFixed(4),
+    row.interestExpenseGDP.toFixed(4),
+    row.interestRevenue.toFixed(4),
+    row.closingDebt.toFixed(4),
+  ]);
+
+  const csv = [headers, ...rows]
+    .map((row) => row.map(csvEscape).join(","))
+    .join("\n");
+
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8",
+  });
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+
+  anchor.download =
+    `fiscal-command-${scenarioKey}-` +
+    `${state.results.inputs.baseYear}.csv`;
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  URL.revokeObjectURL(url);
+
+  announce(
+    `${scenarioMeta[scenarioKey].label} projection exported as CSV.`
+  );
 }
-
-    const scenarioKey = elements.tableScenario.value;
-    const scenario =
-      state.results.scenarios[scenarioKey];
-
-    const headers = [
-      "Year",
-      "Opening Debt (% GDP)",
-      "Nominal Growth (%)",
-      "Effective Interest Rate (%)",
-      "Primary Balance (% GDP)",
-      "Stock-Flow Adjustment (% GDP)",
-      "Interest Expense (% GDP)",
-      "Interest Expense (% Revenue)",
-      "Closing Debt (% GDP)",
-    ];
-
-    const rows = scenario.rows.map((row) => [
-      row.year,
-      row.openingDebt.toFixed(4),
-      row.nominalGrowth.toFixed(4),
-      row.effectiveRate.toFixed(4),
-      row.primaryBalance.toFixed(4),
-      row.stockFlowAdjustment.toFixed(4),
-      row.interestExpenseGDP.toFixed(4),
-      row.interestRevenue.toFixed(4),
-      row.closingDebt.toFixed(4),
-    ]);
-
-    const csv = [headers, ...rows]
-      .map((row) =>
-        row.map(csvEscape).join(",")
-      )
-      .join("\n");
-
-    const blob = new Blob([csv], {
-      type: "text/csv;charset=utf-8",
-    });
-
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-
-    anchor.href = url;
-    anchor.download =
-      `fiscal-command-${scenarioKey}-${
-        state.results.inputs.baseYear
-      }.csv`;
-
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-
-    URL.revokeObjectURL(url);
-
-    announce(
-      `${scenarioMeta[scenarioKey].label} projection exported as CSV.`
-    );
-  }
 
   function csvEscape(value) {
     const text = String(value);
