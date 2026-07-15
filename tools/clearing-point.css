@@ -1651,6 +1651,61 @@ select {
   pointer-events: none;
 }
 
+.chart-empty-state[hidden] {
+  display: none;
+}
+
+#marketChart {
+  cursor: crosshair;
+  touch-action: pan-y;
+}
+
+.chart-tooltip {
+  display: grid;
+  gap: 3px;
+}
+
+.chart-tooltip strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--cyan);
+  font-size: 0.69rem;
+  letter-spacing: 0.025em;
+}
+
+.chart-tooltip span {
+  display: block;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.chart-tooltip span:nth-child(3) {
+  color: var(--text-soft);
+}
+
+.auction-tape-item,
+.tenor-card[role="button"],
+tbody tr[data-record-id] {
+  cursor: pointer;
+}
+
+tbody tr.is-selected {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(99, 232, 255, 0.08),
+      rgba(99, 232, 255, 0.025)
+    );
+}
+
+tbody tr.is-selected td:first-child {
+  box-shadow:
+    inset 2px 0 0 var(--cyan);
+}
+
+tbody tr.is-selected td {
+  color: var(--text-soft);
+}
 
 /* =========================================================
    SIGNAL ENGINE
