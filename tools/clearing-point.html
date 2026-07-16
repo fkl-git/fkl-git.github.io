@@ -512,8 +512,16 @@
         </section>
       </aside>
 
-      <!-- =======================================================
-           CENTRAL MARKET WORKSPACE
+<button
+  class="data-dock-backdrop"
+  id="dataDockBackdrop"
+  type="button"
+  aria-label="Close data dock"
+  hidden
+></button>
+
+<!-- =======================================================
+     CENTRAL MARKET WORKSPACE
       ======================================================== -->
 
       <div class="market-workspace">
@@ -907,10 +915,19 @@
             class="chart-stage"
             id="chartStage"
           >
-            <canvas
-              id="marketChart"
-              aria-label="Auction market data chart"
-            ></canvas>
+            <<canvas
+  id="marketChart"
+  role="img"
+  aria-label="Auction market data chart"
+  aria-describedby="chartAccessibilitySummary"
+></canvas>
+
+<p
+  class="visually-hidden"
+  id="chartAccessibilitySummary"
+>
+  No auction data has been loaded.
+</p>
 
             <div
               class="chart-empty-state"
@@ -1713,9 +1730,10 @@
   ============================================================ -->
 
   <dialog
-    class="modal"
-    id="pasteCsvDialog"
-  >
+  class="modal"
+  id="pasteCsvDialog"
+  aria-labelledby="pasteCsvDialogTitle"
+>
     <form
       class="modal__surface"
       id="pasteCsvForm"
@@ -1727,9 +1745,9 @@
             DATA//PASTE
           </p>
 
-          <h2>
-            Paste CSV Data
-          </h2>
+          <h2 id="pasteCsvDialogTitle">
+  Paste CSV Data
+</h2>
         </div>
 
         <button
@@ -1789,9 +1807,10 @@
   ============================================================ -->
 
   <dialog
-    class="modal"
-    id="manualEntryDialog"
-  >
+  class="modal"
+  id="manualEntryDialog"
+  aria-labelledby="manualEntryDialogTitle"
+>
     <form
       class="modal__surface"
       id="manualEntryForm"
@@ -1802,9 +1821,9 @@
             RECORD//ENTRY
           </p>
 
-          <h2>
-            Add Auction Record
-          </h2>
+          <h2 id="manualEntryDialogTitle">
+  Add Auction Record
+</h2>
         </div>
 
         <button
@@ -1984,9 +2003,10 @@
   ============================================================ -->
 
   <dialog
-    class="modal modal--compact"
-    id="saveDatasetDialog"
-  >
+  class="modal modal--compact"
+  id="saveDatasetDialog"
+  aria-labelledby="saveDatasetDialogTitle"
+>
     <form
       class="modal__surface"
       id="saveDatasetForm"
@@ -1997,9 +2017,9 @@
             LOCAL//SAVE
           </p>
 
-          <h2>
-            Save Dataset
-          </h2>
+          <h2 id="saveDatasetDialogTitle">
+  Save Dataset
+</h2>
         </div>
 
         <button
@@ -2059,9 +2079,10 @@
   ============================================================ -->
 
   <dialog
-    class="modal"
-    id="datasetManagerDialog"
-  >
+  class="modal"
+  id="datasetManagerDialog"
+  aria-labelledby="datasetManagerDialogTitle"
+>
     <div class="modal__surface">
       <div class="modal__header">
         <div>
@@ -2069,9 +2090,9 @@
             LOCAL//ARCHIVE
           </p>
 
-          <h2>
-            Saved Datasets
-          </h2>
+          <h2 id="datasetManagerDialogTitle">
+  Saved Datasets
+</h2>
         </div>
 
         <button
@@ -2100,9 +2121,11 @@
   ============================================================ -->
 
   <dialog
-    class="modal modal--compact"
-    id="confirmationDialog"
-  >
+  class="modal modal--compact"
+  id="confirmationDialog"
+  aria-labelledby="confirmationTitle"
+  aria-describedby="confirmationMessage"
+>
     <div class="modal__surface">
       <div class="modal__header">
         <div>
