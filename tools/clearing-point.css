@@ -1567,6 +1567,8 @@ select {
   position: relative;
   min-height: 390px;
   overflow: hidden;
+   contain: layout paint;
+isolation: isolate;
   background:
     linear-gradient(
       rgba(99, 232, 255, 0.025) 1px,
@@ -1707,50 +1709,17 @@ tbody tr.is-selected td {
   color: var(--text-soft);
 }
 
-#marketChart {
+##marketChart {
   opacity: 1;
   transform: translateY(0);
   transition:
-    opacity 240ms ease,
-    transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
-  will-change: opacity, transform;
+    opacity 180ms ease-out,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .chart-stage.is-rendering #marketChart {
-  opacity: 0;
-  transform: translateY(7px);
-}
-
-.chart-stage.has-data::after {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      105deg,
-      transparent 20%,
-      rgba(99, 232, 255, 0.025),
-      transparent 80%
-    );
-  content: "";
-  opacity: 0;
-  pointer-events: none;
-  animation: chart-entry-scan 520ms ease-out;
-}
-
-@keyframes chart-entry-scan {
-  0% {
-    opacity: 0;
-    transform: translateX(-45%);
-  }
-
-  35% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateX(45%);
-  }
+  opacity: 0.12;
+  transform: translateY(4px);
 }
 
 /* =========================================================
