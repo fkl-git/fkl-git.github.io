@@ -80,6 +80,9 @@ chartAnimationFrame: null,
 dialogOpeners: new WeakMap(),
 dataDockReturnFocus: null,
 
+printReturnScrollY: 0,
+printDetailsState: null,
+
 confirmationAction: null,
   };
 
@@ -119,6 +122,7 @@ cancelSaveDatasetButton:
 
 saveDatasetButton: $("saveDatasetButton"),
     exportDataButton: $("exportDataButton"),
+    printReportButton: $("printReportButton"),
     exportProcessedCsvButton: $("exportProcessedCsvButton"),
     downloadVisibleTableButton: $("downloadVisibleTableButton"),
 
@@ -215,6 +219,26 @@ chartEmptyState: $("chartEmptyState"),
 
     toastRegion: $("toastRegion"),
 screenReaderStatus: $("screenReaderStatus"),
+    printReportDataset:
+  $("printReportDataset"),
+
+printReportGenerated:
+  $("printReportGenerated"),
+
+printReportScope:
+  $("printReportScope"),
+
+printReportRecords:
+  $("printReportRecords"),
+
+printReportMetric:
+  $("printReportMetric"),
+
+printReportSelection:
+  $("printReportSelection"),
+
+printReportWarnings:
+  $("printReportWarnings"),
 
     auctionTapeItemTemplate: $("auctionTapeItemTemplate"),
     tenorCardTemplate: $("tenorCardTemplate"),
@@ -468,6 +492,11 @@ ui.exportDataButton.addEventListener(
   }
 );
 
+    ui.printReportButton.addEventListener(
+  "click",
+  printCurrentReport
+);
+
 ui.exportProcessedCsvButton.addEventListener(
   "click",
   () => {
@@ -531,6 +560,20 @@ window.addEventListener(
 document.addEventListener(
   "keydown",
   handleGlobalKeydown
+);
+
+    window.addEventListener(
+  "beforeprint",
+  () => {
+    if (state.records.length) {
+      preparePrintReport();
+    }
+  }
+);
+
+window.addEventListener(
+  "afterprint",
+  restoreAfterPrint
 );
 
     [
@@ -4681,6 +4724,9 @@ ui.chartTenorSelect.disabled =
 ui.exportDataButton.disabled =
   !hasData;
 
+ui.printReportButton.disabled =
+  !hasData;
+
 ui.exportProcessedCsvButton
   .disabled = !hasData;
 
@@ -5883,6 +5929,244 @@ function announceValidationWarnings() {
     }`,
     "warning"
   );
+}
+
+function printCurrentReport() {
+  if (!state.records.length) {
+    toast(
+      "Load auction data before printing a report.",
+      "warning"
+    );
+
+    return;
+  }
+
+  state.printReturnScrollY =
+    window.scrollY;
+
+  preparePrintReport();
+
+  /*
+    Allow the fully rendered table and chart
+    to reach the browser before opening print.
+  */
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.print();
+    });
+  });
+}
+
+function preparePrintReport() {
+  if (!state.records.length) {
+    return;
+  }
+
+  const visibleRecords =
+    visibleTableRecords();
+
+  const selectedRecord =
+    selected();
+
+  const metric =
+    chartMetricConfig(
+      state.chartMetric
+    )?.label ||
+    "Auction series";
+
+  const chartTenor =
+    ui.chartTenorSelect
+      .selectedOptions[0]
+      ?.textContent ||
+    "All available tenors";
+
+  ui.printReportDataset
+    .textContent =
+    state.source ||
+    "Current browser dataset";
+
+  ui.printReportGenerated
+    .textContent =
+    formatPrintTimestamp(
+      new Date()
+    );
+
+  ui.printReportScope
+    .textContent =
+    buildPrintScope();
+
+  ui.printReportRecords
+    .textContent =
+    `${visibleRecords.length.toLocaleString(
+      "en-PH"
+    )} of ${state.records.length.toLocaleString(
+      "en-PH"
+    )}`;
+
+  ui.printReportMetric
+    .textContent =
+    `${metric} · ${chartTenor}`;
+
+  ui.printReportSelection
+    .textContent =
+    selectedRecord
+      ? [
+          formatDate(
+            selectedRecord
+              .auction_date
+          ),
+
+          selectedRecord
+            .instrument_type,
+
+          selectedRecord.tenor,
+
+          formatYield(
+            selectedRecord
+              .accepted_yield
+          ),
+        ].join(" · ")
+      : "No auction selected";
+
+  const warningCount =
+    state.validationWarnings.length;
+
+  ui.printReportWarnings
+    .textContent =
+    warningCount
+      ? `${warningCount} warning${
+          warningCount === 1
+            ? ""
+            : "s"
+        } requiring review`
+      : "None";
+
+  /*
+    Large tables may normally render in chunks.
+    Printing requires every matching row to exist
+    in the DOM before the print dialog opens.
+  */
+  renderTable({
+    immediate: true,
+  });
+
+  renderChart(false);
+
+  openMethodologyForPrint();
+}
+
+function buildPrintScope() {
+  const parts = [];
+
+  const filterSummary =
+    ui.activeFilterSummary
+      .textContent
+      .trim();
+
+  if (
+    filterSummary &&
+    filterSummary !==
+      "ALL RECORDS"
+  ) {
+    parts.push(
+      filterSummary
+    );
+  }
+
+  if (state.search) {
+    parts.push(
+      `Search: "${state.search}"`
+    );
+  }
+
+  return parts.length
+    ? parts.join(" · ")
+    : "All records";
+}
+
+function formatPrintTimestamp(
+  date
+) {
+  return new Intl.DateTimeFormat(
+    "en-PH",
+    {
+      year: "numeric",
+      month: "long",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  ).format(date);
+}
+
+function openMethodologyForPrint() {
+  const details = [
+    ...document.querySelectorAll(
+      ".methodology-details"
+    ),
+  ];
+
+  if (
+    state.printDetailsState ===
+    null
+  ) {
+    state.printDetailsState =
+      details.map(
+        (detail) =>
+          detail.open
+      );
+  }
+
+  details.forEach(
+    (detail) => {
+      detail.open = true;
+    }
+  );
+}
+
+function restoreAfterPrint() {
+  const details = [
+    ...document.querySelectorAll(
+      ".methodology-details"
+    ),
+  ];
+
+  if (
+    Array.isArray(
+      state.printDetailsState
+    )
+  ) {
+    details.forEach(
+      (detail, index) => {
+        detail.open =
+          Boolean(
+            state
+              .printDetailsState[
+                index
+              ]
+          );
+      }
+    );
+  }
+
+  state.printDetailsState =
+    null;
+
+  /*
+    Return large tables to progressive rendering
+    after the print dialog closes.
+  */
+  renderTable();
+  renderChart(false);
+
+  requestAnimationFrame(() => {
+    window.scrollTo({
+      top:
+        state.printReturnScrollY,
+      left: 0,
+      behavior: "auto",
+    });
+  });
 }
   
   function confirmAction(
