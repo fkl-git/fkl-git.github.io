@@ -180,6 +180,15 @@
         </button>
 
         <button
+  class="button button--ghost"
+  id="printReportButton"
+  type="button"
+  disabled
+>
+  PRINT REPORT
+</button>
+
+        <button
           class="button button--danger"
           id="resetDashboardButton"
           type="button"
@@ -244,6 +253,105 @@
       </div>
     </section>
 
+<section
+  class="print-report-header"
+  id="printReportHeader"
+>
+  <div class="print-report-header__top">
+    <div>
+      <p class="print-report-header__eyebrow">
+        CLEARING//POINT
+      </p>
+
+      <h1>
+        Philippine Government Securities Auction Report
+      </h1>
+    </div>
+
+    <p class="print-report-header__type">
+      Browser-generated analytical snapshot
+    </p>
+  </div>
+
+  <div class="print-report-header__grid">
+    <div>
+      <span>
+        Dataset
+      </span>
+
+      <strong id="printReportDataset">
+        —
+      </strong>
+    </div>
+
+    <div>
+      <span>
+        Generated
+      </span>
+
+      <strong id="printReportGenerated">
+        —
+      </strong>
+    </div>
+
+    <div>
+      <span>
+        Current scope
+      </span>
+
+      <strong id="printReportScope">
+        —
+      </strong>
+    </div>
+
+    <div>
+      <span>
+        Records
+      </span>
+
+      <strong id="printReportRecords">
+        —
+      </strong>
+    </div>
+
+    <div>
+      <span>
+        Chart view
+      </span>
+
+      <strong id="printReportMetric">
+        —
+      </strong>
+    </div>
+
+    <div>
+      <span>
+        Selected auction
+      </span>
+
+      <strong id="printReportSelection">
+        —
+      </strong>
+    </div>
+
+    <div>
+      <span>
+        Data warnings
+      </span>
+
+      <strong id="printReportWarnings">
+        —
+      </strong>
+    </div>
+  </div>
+
+  <p class="print-report-header__disclaimer">
+    Calculations and signals are descriptive outputs generated from the
+    supplied dataset. They are not official government assessments,
+    forecasts, or investment recommendations.
+  </p>
+</section>
+    
     <!-- =========================================================
          MAIN DASHBOARD
     ========================================================== -->
