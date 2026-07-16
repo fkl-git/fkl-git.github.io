@@ -8,15 +8,28 @@
     content="width=device-width, initial-scale=1.0"
   >
 
+  <title>
+    CLEARING//POINT | Philippine Government Securities Auction Lab
+  </title>
+
   <meta
     name="description"
-    content="CLEARING//POINT is a browser-based Philippine government securities auction lab for analyzing auction demand, accepted yields, award behavior, and tenor signals."
+    content="Analyze Philippine government securities auctions using bid-to-cover ratios, accepted yields, award behavior, yield movements, tenor comparisons, CSV tools, and printable reports."
   >
 
-  <!-- Keep the unfinished tool out of search results during development. -->
+  <meta
+    name="author"
+    content="Josh Michael Luistro"
+  >
+
+  <meta
+    name="application-name"
+    content="CLEARING//POINT"
+  >
+
   <meta
     name="robots"
-    content="noindex, nofollow"
+    content="index, follow, max-image-preview:large"
   >
 
   <meta
@@ -24,30 +37,96 @@
     content="#07090d"
   >
 
-  <title>
-    CLEARING//POINT | Philippine Government Securities Auction Lab
-  </title>
+  <link
+    rel="canonical"
+    href="https://joshmichaelluistro.com/tools/clearing-point.html"
+  >
+
+  <meta
+    property="og:type"
+    content="website"
+  >
+
+  <meta
+    property="og:locale"
+    content="en_PH"
+  >
+
+  <meta
+    property="og:site_name"
+    content="Josh Michael Luistro"
+  >
+
+  <meta
+    property="og:title"
+    content="CLEARING//POINT | Philippine Government Securities Auction Lab"
+  >
+
+  <meta
+    property="og:description"
+    content="A browser-based analytical lab for examining Philippine government securities auction demand, accepted yields, award behavior, and tenor signals."
+  >
+
+  <meta
+    property="og:url"
+    content="https://joshmichaelluistro.com/tools/clearing-point.html"
+  >
+
+  <meta
+    name="twitter:card"
+    content="summary"
+  >
+
+  <meta
+    name="twitter:title"
+    content="CLEARING//POINT | Philippine Government Securities Auction Lab"
+  >
+
+  <meta
+    name="twitter:description"
+    content="Analyze auction demand, yield formation, award behavior, and tenor signals using a browser-based Philippine government securities tool."
+  >
 
   <link
     rel="icon"
     type="image/png"
-    href="../assets/site-icon.png?v=1.0"
+    href="/assets/site-icon.png?v=1.0"
   >
 
   <link
     rel="apple-touch-icon"
-    href="../assets/site-icon.png?v=1.0"
+    href="/assets/site-icon.png?v=1.0"
   >
 
   <link
-  rel="stylesheet"
-  href="clearing-point.css?v=0.3.0"
->
+    rel="stylesheet"
+    href="clearing-point.css?v=1.0.0"
+  >
 
- <script
-  src="clearing-point.js?v=0.5.1"
-  defer
-></script>
+  <script
+    src="clearing-point.js?v=1.0.0"
+    defer
+  ></script>
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "CLEARING//POINT",
+      "alternateName": "Philippine Government Securities Auction Lab",
+      "url": "https://joshmichaelluistro.com/tools/clearing-point.html",
+      "description": "A browser-based analytical tool for examining Philippine government securities auction demand, accepted yields, award behavior, and tenor signals.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "isAccessibleForFree": true,
+      "creator": {
+        "@type": "Person",
+        "name": "Josh Michael Luistro",
+        "url": "https://joshmichaelluistro.com/"
+      }
+    }
+  </script>
 </head>
 
 <body>
@@ -1023,7 +1102,7 @@
             class="chart-stage"
             id="chartStage"
           >
-            <<canvas
+            <canvas
   id="marketChart"
   role="img"
   aria-label="Auction market data chart"
@@ -1815,8 +1894,8 @@
 
       <div class="tool-footer__meta">
         <span>
-          Prototype v0.5.1
-        </span>
+  Release v1.0 · July 2026
+</span>
 
         <span>
           Browser-based
