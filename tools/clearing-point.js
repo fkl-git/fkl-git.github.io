@@ -14,6 +14,22 @@ document.addEventListener("DOMContentLoaded", () => {
     "accepted_yield",
   ];
 
+  const STORAGE_KEY =
+  "clearing-point.saved-datasets.v1";
+
+const PROCESSED_COLUMNS = [
+  ...REQUIRED,
+  "previous_yield",
+  "bid_to_cover",
+  "award_to_offer",
+  "acceptance_ratio",
+  "yield_change_bps",
+  "recent_average_cover",
+  "recent_average_yield",
+  "award_status",
+  "demand_signal",
+];
+
   const SAMPLE_CSV = `auction_date,instrument_type,tenor,tenor_days,amount_offered,tenders_received,amount_awarded,accepted_yield
 2026-05-04,T-Bill,91-day,91,7000,14780,7000,5.611
 2026-05-04,T-Bill,182-day,182,7000,12110,6800,5.748
@@ -42,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     filtered: [],
     selectedId: null,
     source: "",
+    activeSavedDatasetId: null,
     search: "",
     sortKey: "auction_date",
     sortDirection: "desc",
@@ -77,9 +94,20 @@ confirmationAction: null,
     openDatasetManagerButton: $("openDatasetManagerButton"),
     openSavedDatasetsButton: $("openSavedDatasetsButton"),
     datasetManagerDialog: $("datasetManagerDialog"),
-    closeDatasetManagerButton: $("closeDatasetManagerButton"),
+closeDatasetManagerButton: $("closeDatasetManagerButton"),
+savedDatasetList: $("savedDatasetList"),
 
-    saveDatasetButton: $("saveDatasetButton"),
+saveDatasetDialog: $("saveDatasetDialog"),
+saveDatasetForm: $("saveDatasetForm"),
+datasetNameInput: $("datasetNameInput"),
+saveDatasetValidationMessage:
+  $("saveDatasetValidationMessage"),
+closeSaveDatasetButton:
+  $("closeSaveDatasetButton"),
+cancelSaveDatasetButton:
+  $("cancelSaveDatasetButton"),
+
+saveDatasetButton: $("saveDatasetButton"),
     exportDataButton: $("exportDataButton"),
     exportProcessedCsvButton: $("exportProcessedCsvButton"),
     downloadVisibleTableButton: $("downloadVisibleTableButton"),
@@ -174,12 +202,15 @@ chartEmptyState: $("chartEmptyState"),
     confirmationProceedButton: $("confirmationProceedButton"),
 
     toastRegion: $("toastRegion"),
+screenReaderStatus: $("screenReaderStatus"),
 
     auctionTapeItemTemplate: $("auctionTapeItemTemplate"),
     tenorCardTemplate: $("tenorCardTemplate"),
     signalFeedItemTemplate: $("signalFeedItemTemplate"),
+savedDatasetItemTemplate:
+  $("savedDatasetItemTemplate"),
 
-    tableSortButtons: [
+tableSortButtons: [
       ...document.querySelectorAll(".table-sort-button"),
     ],
 
@@ -345,40 +376,80 @@ chartEmptyState: $("chartEmptyState"),
     );
 
     ui.openDatasetManagerButton.addEventListener(
-      "click",
-      () => {
-        openDialog(ui.datasetManagerDialog);
-      }
+  "click",
+  openDatasetManager
+);
+
+ui.openSavedDatasetsButton.addEventListener(
+  "click",
+  openDatasetManager
+);
+
+ui.closeDatasetManagerButton.addEventListener(
+  "click",
+  () => {
+    ui.datasetManagerDialog.close();
+  }
+);
+
+ui.savedDatasetList.addEventListener(
+  "click",
+  handleSavedDatasetAction
+);
+
+ui.saveDatasetButton.addEventListener(
+  "click",
+  openSaveDatasetDialog
+);
+
+ui.saveDatasetForm.addEventListener(
+  "submit",
+  saveCurrentDataset
+);
+
+ui.closeSaveDatasetButton.addEventListener(
+  "click",
+  () => {
+    ui.saveDatasetDialog.close();
+  }
+);
+
+ui.cancelSaveDatasetButton.addEventListener(
+  "click",
+  () => {
+    ui.saveDatasetDialog.close();
+  }
+);
+
+ui.exportDataButton.addEventListener(
+  "click",
+  () => {
+    exportProcessedRecords(
+      state.records,
+      "processed"
     );
+  }
+);
 
-    ui.openSavedDatasetsButton.addEventListener(
-      "click",
-      () => {
-        openDialog(ui.datasetManagerDialog);
-      }
+ui.exportProcessedCsvButton.addEventListener(
+  "click",
+  () => {
+    exportProcessedRecords(
+      state.records,
+      "processed"
     );
+  }
+);
 
-    ui.closeDatasetManagerButton.addEventListener(
-      "click",
-      () => {
-        ui.datasetManagerDialog.close();
-      }
+ui.downloadVisibleTableButton.addEventListener(
+  "click",
+  () => {
+    exportProcessedRecords(
+      visibleTableRecords(),
+      "current-view"
     );
-
-    [
-      ui.saveDatasetButton,
-      ui.exportDataButton,
-      ui.exportProcessedCsvButton,
-      ui.downloadVisibleTableButton,
-    ].forEach((button) => {
-      button.addEventListener("click", () => {
-        toast(
-          "This control is activated in Pass 5.",
-          "warning"
-        );
-      });
-    });
-
+  }
+);
    ui.chartButtons.forEach((button) => {
   button.addEventListener("click", () => {
     setChartMetric(
@@ -420,11 +491,12 @@ window.addEventListener(
 );
 
     [
-      ui.pasteCsvDialog,
-      ui.manualEntryDialog,
-      ui.datasetManagerDialog,
-      ui.confirmationDialog,
-    ].forEach((dialog) => {
+  ui.pasteCsvDialog,
+  ui.manualEntryDialog,
+  ui.saveDatasetDialog,
+  ui.datasetManagerDialog,
+  ui.confirmationDialog,
+].forEach((dialog) => {
       dialog.addEventListener("click", (event) => {
         if (event.target === dialog) {
           dialog.close();
@@ -648,7 +720,8 @@ window.addEventListener(
     state.records = validateAndProcess(rows);
     state.filtered = [...state.records];
     state.source = source;
-    state.selectedId =
+state.activeSavedDatasetId = null;
+state.selectedId =
       latest(state.records)?.id || null;
     state.search = "";
     state.sortKey = "auction_date";
@@ -2260,6 +2333,10 @@ renderAll();
       });
     }
 
+ui.downloadVisibleTableButton
+  .disabled =
+  records.length === 0;
+    
     ui.visibleRecordCount
       .textContent =
       `${records.length} record${
@@ -4092,7 +4169,8 @@ function debounce(
     state.filtered = [];
     state.selectedId = null;
     state.source = "";
-    state.search = "";
+state.activeSavedDatasetId = null;
+state.search = "";
     state.tapeIndex = 0;
     state.chartMetric =
   "accepted_yield";
@@ -4170,20 +4248,18 @@ ui.chartButtons.forEach(
 ui.chartTenorSelect.disabled =
   !hasChartData;
 
-    /*
-      Pass 5 activates save/export controls.
-    */
     ui.saveDatasetButton.disabled =
-      true;
+  !hasData;
 
-    ui.exportDataButton.disabled =
-      true;
+ui.exportDataButton.disabled =
+  !hasData;
 
-    ui.exportProcessedCsvButton
-      .disabled = true;
+ui.exportProcessedCsvButton
+  .disabled = !hasData;
 
-    ui.downloadVisibleTableButton
-      .disabled = true;
+ui.downloadVisibleTableButton
+  .disabled =
+  visibleTableRecords().length === 0;
   }
 
   function setInputsEnabled(
@@ -4343,6 +4419,916 @@ ui.chartTenorSelect.disabled =
     );
   }
 
+function openSaveDatasetDialog() {
+  if (!state.records.length) {
+    toast(
+      "Load auction data before saving a dataset.",
+      "warning"
+    );
+
+    return;
+  }
+
+  clearValidation(
+    ui.saveDatasetValidationMessage
+  );
+
+  const savedDatasets =
+    safelyReadSavedDatasets();
+
+  const activeDataset =
+    savedDatasets.find(
+      (dataset) =>
+        dataset.id ===
+        state.activeSavedDatasetId
+    );
+
+  ui.datasetNameInput.value =
+    activeDataset?.name ||
+    suggestedDatasetName();
+
+  openDialog(ui.saveDatasetDialog);
+
+  requestAnimationFrame(() => {
+    ui.datasetNameInput.focus();
+    ui.datasetNameInput.select();
+  });
+}
+
+function saveCurrentDataset(event) {
+  event.preventDefault();
+
+  clearValidation(
+    ui.saveDatasetValidationMessage
+  );
+
+  const name =
+    ui.datasetNameInput.value
+      .trim();
+
+  if (!name) {
+    validation(
+      ui.saveDatasetValidationMessage,
+      "Enter a name for this dataset.",
+      "error"
+    );
+
+    return;
+  }
+
+  try {
+    const savedDatasets =
+      readSavedDatasets();
+
+    const duplicate =
+      savedDatasets.find(
+        (dataset) =>
+          dataset.name
+            .toLowerCase() ===
+            name.toLowerCase() &&
+          dataset.id !==
+            state.activeSavedDatasetId
+      );
+
+    if (duplicate) {
+      validation(
+        ui.saveDatasetValidationMessage,
+        "A saved dataset already uses this name.",
+        "error"
+      );
+
+      return;
+    }
+
+    const existingIndex =
+      savedDatasets.findIndex(
+        (dataset) =>
+          dataset.id ===
+          state.activeSavedDatasetId
+      );
+
+    const now =
+      new Date().toISOString();
+
+    const existing =
+      existingIndex >= 0
+        ? savedDatasets[existingIndex]
+        : null;
+
+    const dataset = {
+      id:
+        existing?.id ||
+        createStorageId(),
+
+      name,
+
+      source: state.source,
+
+      createdAt:
+        existing?.createdAt ||
+        now,
+
+      updatedAt: now,
+
+      records:
+        state.records.map(
+          rawFields
+        ),
+
+      view:
+        captureCurrentView(),
+    };
+
+    if (existingIndex >= 0) {
+      savedDatasets[
+        existingIndex
+      ] = dataset;
+    } else {
+      savedDatasets.unshift(
+        dataset
+      );
+    }
+
+    writeSavedDatasets(
+      savedDatasets
+    );
+
+    state.activeSavedDatasetId =
+      dataset.id;
+
+    ui.saveDatasetDialog.close();
+    renderSavedDatasetList();
+
+    toast(
+      existing
+        ? "Saved dataset updated."
+        : "Dataset saved in this browser.",
+      "success"
+    );
+  } catch (error) {
+    validation(
+      ui.saveDatasetValidationMessage,
+      storageErrorMessage(error),
+      "error"
+    );
+  }
+}
+
+function openDatasetManager() {
+  renderSavedDatasetList();
+
+  openDialog(
+    ui.datasetManagerDialog
+  );
+}
+
+function renderSavedDatasetList() {
+  ui.savedDatasetList
+    .replaceChildren();
+
+  let savedDatasets;
+
+  try {
+    savedDatasets =
+      readSavedDatasets();
+  } catch (error) {
+    const message =
+      document.createElement("div");
+
+    message.className =
+      "saved-dataset-list__empty";
+
+    message.textContent =
+      storageErrorMessage(error);
+
+    ui.savedDatasetList
+      .appendChild(message);
+
+    return;
+  }
+
+  if (!savedDatasets.length) {
+    const empty =
+      document.createElement("div");
+
+    empty.className =
+      "saved-dataset-list__empty";
+
+    empty.textContent =
+      "No datasets have been saved in this browser.";
+
+    ui.savedDatasetList
+      .appendChild(empty);
+
+    return;
+  }
+
+  savedDatasets
+    .sort(
+      (first, second) =>
+        String(
+          second.updatedAt || ""
+        ).localeCompare(
+          String(
+            first.updatedAt || ""
+          )
+        )
+    )
+    .forEach((dataset) => {
+      const fragment =
+        ui.savedDatasetItemTemplate
+          .content
+          .cloneNode(true);
+
+      const item =
+        fragment.querySelector(
+          ".saved-dataset-item"
+        );
+
+      item.dataset.datasetId =
+        dataset.id;
+
+      item.querySelector(
+        '[data-field="name"]'
+      ).textContent =
+        dataset.name;
+
+      item.querySelector(
+        '[data-field="meta"]'
+      ).textContent =
+        `${dataset.records.length} record${
+          dataset.records.length === 1
+            ? ""
+            : "s"
+        } · saved ${formatStoredDate(
+          dataset.updatedAt
+        )}`;
+
+      ui.savedDatasetList
+        .appendChild(fragment);
+    });
+}
+
+function handleSavedDatasetAction(
+  event
+) {
+  const button =
+    event.target.closest(
+      "button[data-action]"
+    );
+
+  if (!button) {
+    return;
+  }
+
+  const item =
+    button.closest(
+      "[data-dataset-id]"
+    );
+
+  const datasetId =
+    item?.dataset.datasetId;
+
+  if (!datasetId) {
+    return;
+  }
+
+  if (
+    button.dataset.action ===
+    "load"
+  ) {
+    loadSavedDataset(datasetId);
+    return;
+  }
+
+  if (
+    button.dataset.action ===
+    "delete"
+  ) {
+    const dataset =
+      safelyReadSavedDatasets()
+        .find(
+          (entry) =>
+            entry.id ===
+            datasetId
+        );
+
+    confirmAction(
+      "Delete saved dataset?",
+      dataset
+        ? `"${dataset.name}" will be removed from this browser.`
+        : "This saved dataset will be removed from this browser.",
+      () => {
+        deleteSavedDataset(
+          datasetId
+        );
+      }
+    );
+  }
+}
+
+function loadSavedDataset(
+  datasetId
+) {
+  try {
+    const dataset =
+      readSavedDatasets()
+        .find(
+          (entry) =>
+            entry.id ===
+            datasetId
+        );
+
+    if (!dataset) {
+      throw new Error(
+        "The saved dataset could not be found."
+      );
+    }
+
+    state.records =
+      validateAndProcess(
+        dataset.records
+      );
+
+    state.filtered = [
+      ...state.records,
+    ];
+
+    state.source =
+      dataset.source ||
+      dataset.name;
+
+    state.activeSavedDatasetId =
+      dataset.id;
+
+    state.search = "";
+    state.sortKey =
+      "auction_date";
+    state.sortDirection =
+      "desc";
+    state.tapeIndex = 0;
+    state.chartMetric =
+      "accepted_yield";
+    state.chartTenor = "all";
+
+    clearFilterInputs();
+    populateControls();
+
+    restoreSavedView(
+      dataset.view || {}
+    );
+
+    ui.datasetManagerDialog.close();
+
+    renderAll();
+
+    toast(
+      `"${dataset.name}" loaded.`,
+      "success"
+    );
+  } catch (error) {
+    toast(
+      error.message ||
+        "The saved dataset could not be loaded.",
+      "error"
+    );
+  }
+}
+
+function restoreSavedView(view) {
+  const instrument =
+    ["all", "T-Bill", "T-Bond"]
+      .includes(view.instrument)
+      ? view.instrument
+      : "all";
+
+  ui.instrumentFilter.value =
+    instrument;
+
+  populateTenorFilter();
+
+  const tenor =
+    String(
+      view.tenor || "all"
+    );
+
+  ui.tenorFilter.value =
+    optionExists(
+      ui.tenorFilter,
+      tenor
+    )
+      ? tenor
+      : "all";
+
+  ui.awardStatusFilter.value =
+    ["all", "full", "partial", "none"]
+      .includes(view.awardStatus)
+      ? view.awardStatus
+      : "all";
+
+  ui.startDateFilter.value =
+    validStoredDate(
+      view.startDate
+    );
+
+  ui.endDateFilter.value =
+    validStoredDate(
+      view.endDate
+    );
+
+  state.filtered =
+    state.records.filter(
+      (record) =>
+        (
+          ui.instrumentFilter
+            .value === "all" ||
+          record.instrument_type ===
+            ui.instrumentFilter
+              .value
+        ) &&
+        (
+          ui.tenorFilter.value ===
+            "all" ||
+          record.tenor_days ===
+            Number(
+              ui.tenorFilter.value
+            )
+        ) &&
+        (
+          ui.awardStatusFilter
+            .value === "all" ||
+          record.award_status ===
+            ui.awardStatusFilter
+              .value
+        ) &&
+        (
+          !ui.startDateFilter.value ||
+          record.auction_date >=
+            ui.startDateFilter.value
+        ) &&
+        (
+          !ui.endDateFilter.value ||
+          record.auction_date <=
+            ui.endDateFilter.value
+        )
+    );
+
+  state.search =
+    String(view.search || "")
+      .trim()
+      .toLowerCase();
+
+  ui.auctionTableSearch.value =
+    state.search;
+
+  const validSortKeys =
+    new Set(
+      ui.tableSortButtons.map(
+        (button) =>
+          button.dataset.sortKey
+      )
+    );
+
+  state.sortKey =
+    validSortKeys.has(
+      view.sortKey
+    )
+      ? view.sortKey
+      : "auction_date";
+
+  state.sortDirection =
+    view.sortDirection ===
+    "asc"
+      ? "asc"
+      : "desc";
+
+  state.chartMetric =
+    typeof view.chartMetric ===
+      "string" &&
+    chartMetricConfig(
+      view.chartMetric
+    )
+      ? view.chartMetric
+      : "accepted_yield";
+
+  populateChartTenorSelect();
+
+  state.chartTenor =
+    optionExists(
+      ui.chartTenorSelect,
+      view.chartTenor
+    )
+      ? view.chartTenor
+      : "all";
+
+  ui.chartTenorSelect.value =
+    state.chartTenor;
+
+  const restoredSelection =
+    findRecordByLocator(
+      view.selectedRecord,
+      state.filtered
+    );
+
+  state.selectedId =
+    restoredSelection?.id ||
+    latest(state.filtered)?.id ||
+    null;
+
+  populateFlowSelect();
+}
+
+function deleteSavedDataset(
+  datasetId
+) {
+  try {
+    const remaining =
+      readSavedDatasets()
+        .filter(
+          (dataset) =>
+            dataset.id !==
+            datasetId
+        );
+
+    writeSavedDatasets(
+      remaining
+    );
+
+    if (
+      state.activeSavedDatasetId ===
+      datasetId
+    ) {
+      state.activeSavedDatasetId =
+        null;
+    }
+
+    renderSavedDatasetList();
+
+    toast(
+      "Saved dataset deleted.",
+      "success"
+    );
+  } catch (error) {
+    toast(
+      storageErrorMessage(error),
+      "error"
+    );
+  }
+}
+
+function captureCurrentView() {
+  return {
+    instrument:
+      ui.instrumentFilter.value,
+
+    tenor:
+      ui.tenorFilter.value,
+
+    awardStatus:
+      ui.awardStatusFilter.value,
+
+    startDate:
+      ui.startDateFilter.value,
+
+    endDate:
+      ui.endDateFilter.value,
+
+    search: state.search,
+
+    sortKey: state.sortKey,
+
+    sortDirection:
+      state.sortDirection,
+
+    chartMetric:
+      state.chartMetric,
+
+    chartTenor:
+      state.chartTenor,
+
+    selectedRecord:
+      recordLocator(
+        selected()
+      ),
+  };
+}
+
+function recordLocator(record) {
+  if (!record) {
+    return null;
+  }
+
+  return {
+    auction_date:
+      record.auction_date,
+
+    instrument_type:
+      record.instrument_type,
+
+    tenor_days:
+      record.tenor_days,
+  };
+}
+
+function findRecordByLocator(
+  locator,
+  records
+) {
+  if (!locator) {
+    return null;
+  }
+
+  return records.find(
+    (record) =>
+      record.auction_date ===
+        locator.auction_date &&
+      record.instrument_type ===
+        locator.instrument_type &&
+      record.tenor_days ===
+        Number(
+          locator.tenor_days
+        )
+  ) || null;
+}
+
+function readSavedDatasets() {
+  const raw =
+    localStorage.getItem(
+      STORAGE_KEY
+    );
+
+  if (!raw) {
+    return [];
+  }
+
+  const parsed =
+    JSON.parse(raw);
+
+  if (!Array.isArray(parsed)) {
+    throw new Error(
+      "Saved dataset storage is invalid."
+    );
+  }
+
+  return parsed.filter(
+    (dataset) =>
+      dataset &&
+      typeof dataset.id ===
+        "string" &&
+      typeof dataset.name ===
+        "string" &&
+      Array.isArray(
+        dataset.records
+      )
+  );
+}
+
+function safelyReadSavedDatasets() {
+  try {
+    return readSavedDatasets();
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedDatasets(
+  datasets
+) {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(datasets)
+  );
+}
+
+function createStorageId() {
+  if (
+    typeof crypto !==
+      "undefined" &&
+    typeof crypto.randomUUID ===
+      "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return [
+    Date.now().toString(36),
+    Math.random()
+      .toString(36)
+      .slice(2, 10),
+  ].join("-");
+}
+
+function suggestedDatasetName() {
+  const sourceName =
+    String(state.source || "")
+      .replace(/\.csv$/i, "")
+      .trim();
+
+  if (sourceName) {
+    return sourceName;
+  }
+
+  const year =
+    latest(state.records)
+      ?.auction_date
+      .slice(0, 4) ||
+    new Date()
+      .getFullYear();
+
+  return `PH government securities auctions — ${year}`;
+}
+
+  function exportProcessedRecords(
+  records,
+  suffix
+) {
+  if (!records.length) {
+    toast(
+      "There are no records to export.",
+      "warning"
+    );
+
+    return;
+  }
+
+  const csv =
+    recordsToCsv(
+      records,
+      PROCESSED_COLUMNS
+    );
+
+  downloadCsv(
+    csv,
+    exportFilename(suffix)
+  );
+
+  toast(
+    `${records.length} record${
+      records.length === 1
+        ? ""
+        : "s"
+    } exported.`,
+    "success"
+  );
+}
+
+function recordsToCsv(
+  records,
+  columns
+) {
+  const lines = [
+    columns.join(","),
+  ];
+
+  records.forEach((record) => {
+    lines.push(
+      columns
+        .map(
+          (column) =>
+            csvCell(
+              record[column]
+            )
+        )
+        .join(",")
+    );
+  });
+
+  return `\uFEFF${lines.join(
+    "\r\n"
+  )}\r\n`;
+}
+
+function csvCell(value) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
+  }
+
+  const text =
+    String(value);
+
+  return /[",\r\n]/.test(text)
+    ? `"${text.replace(
+        /"/g,
+        '""'
+      )}"`
+    : text;
+}
+
+function downloadCsv(
+  content,
+  filename
+) {
+  const url =
+    URL.createObjectURL(
+      new Blob(
+        [content],
+        {
+          type:
+            "text/csv;charset=utf-8",
+        }
+      )
+    );
+
+  const link =
+    document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+
+  document.body
+    .appendChild(link);
+
+  link.click();
+  link.remove();
+
+  setTimeout(
+    () => {
+      URL.revokeObjectURL(url);
+    },
+    0
+  );
+}
+
+function exportFilename(suffix) {
+  const source =
+    String(state.source || "dataset")
+      .replace(/\.csv$/i, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 50) ||
+    "dataset";
+
+  const latestDate =
+    latest(state.records)
+      ?.auction_date ||
+    new Date()
+      .toISOString()
+      .slice(0, 10);
+
+  return `clearing-point-${source}-${suffix}-${latestDate}.csv`;
+}
+
+function optionExists(
+  select,
+  value
+) {
+  return [
+    ...select.options,
+  ].some(
+    (option) =>
+      option.value ===
+      String(value)
+  );
+}
+
+function validStoredDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/
+    .test(String(value || ""))
+    ? value
+    : "";
+}
+
+function formatStoredDate(value) {
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "unknown date";
+  }
+
+  return new Intl.DateTimeFormat(
+    "en-PH",
+    {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  ).format(date);
+}
+
+function storageErrorMessage(
+  error
+) {
+  if (
+    error?.name ===
+    "QuotaExceededError"
+  ) {
+    return "Browser storage is full. Delete an older saved dataset and try again.";
+  }
+
+  return "Browser storage is unavailable or the saved data is invalid.";
+}
+  
   function confirmAction(
     title,
     message,
@@ -4463,7 +5449,10 @@ ui.chartTenorSelect.disabled =
 
     item.textContent = message;
 
-    ui.toastRegion
+ui.screenReaderStatus
+  .textContent = message;
+
+ui.toastRegion
       .appendChild(item);
 
     setTimeout(() => {
