@@ -3187,6 +3187,20 @@ tbody tr:hover {
   }
 }
 
+/* =========================================================
+   RENDERING PERFORMANCE
+========================================================= */
+
+@media screen {
+  @supports (content-visibility: auto) {
+    .tenor-matrix-panel,
+    .auction-table-panel,
+    .methodology-panel {
+      content-visibility: auto;
+      contain-intrinsic-size: 700px;
+    }
+  }
+}
 
 /* =========================================================
    REDUCED MOTION
