@@ -28,6 +28,7 @@ const PROCESSED_COLUMNS = [
   "recent_average_yield",
   "award_status",
   "demand_signal",
+  "warning_flags",
 ];
 
   const SAMPLE_CSV = `auction_date,instrument_type,tenor,tenor_days,amount_offered,tenders_received,amount_awarded,accepted_yield
@@ -58,8 +59,9 @@ const PROCESSED_COLUMNS = [
     filtered: [],
     selectedId: null,
     source: "",
-    activeSavedDatasetId: null,
-    search: "",
+activeSavedDatasetId: null,
+validationWarnings: [],
+search: "",
     sortKey: "auction_date",
     sortDirection: "desc",
     tapeIndex: 0,
@@ -569,10 +571,19 @@ window.addEventListener(
         newRow,
       ];
 
-      const processed = validateAndProcess(rawRows);
+      const warnings = [];
 
-      state.records = processed;
-      state.filtered = [...processed];
+const processed =
+  validateAndProcess(
+    rawRows,
+    warnings
+  );
+
+state.validationWarnings =
+  warnings;
+
+state.records = processed;
+state.filtered = [...processed];
       state.source ||= "Manual dataset";
       state.selectedId =
         latest(processed)?.id || null;
@@ -585,9 +596,11 @@ window.addEventListener(
       ui.manualEntryDialog.close();
 
       toast(
-        "Auction record added.",
-        "success"
-      );
+  "Auction record added.",
+  "success"
+);
+
+announceValidationWarnings();
     } catch (error) {
       validation(
         ui.manualEntryValidationMessage,
@@ -688,41 +701,83 @@ window.addEventListener(
         .replace(/[^a-z0-9_]/g, "")
     );
 
-    const missing = REQUIRED.filter(
-      (name) => !headers.includes(name)
-    );
+    const duplicateHeaders = [
+  ...new Set(
+    headers.filter(
+      (header, index) =>
+        headers.indexOf(header) !== index
+    )
+  ),
+];
 
-    if (missing.length) {
+if (duplicateHeaders.length) {
+  throw new Error(
+    `Duplicate CSV column${
+      duplicateHeaders.length > 1 ? "s" : ""
+    }: ${duplicateHeaders.join(", ")}`
+  );
+}
+
+const missing = REQUIRED.filter(
+  (name) => !headers.includes(name)
+);
+
+if (missing.length) {
+  throw new Error(
+    `Missing required column${
+      missing.length > 1 ? "s" : ""
+    }: ${missing.join(", ")}`
+  );
+}
+
+return rows.slice(1).map(
+  (values, index) => {
+    const rowNumber = index + 2;
+
+    const extraValues =
+      values.slice(headers.length);
+
+    if (
+      extraValues.some(
+        (value) => value !== ""
+      )
+    ) {
       throw new Error(
-        `Missing required column${
-          missing.length > 1 ? "s" : ""
-        }: ${missing.join(", ")}`
+        `Row ${rowNumber}: contains more values than the CSV header.`
       );
     }
 
-    return rows.slice(1).map(
-      (values, index) => {
-        const result = {
-          __row: index + 2,
-        };
+    const result = {
+      __row: rowNumber,
+    };
 
-        headers.forEach((header, column) => {
-          result[header] =
-            values[column] ?? "";
-        });
+    headers.forEach((header, column) => {
+      result[header] =
+        values[column] ?? "";
+    });
 
-        return result;
-      }
-    );
+    return result;
+  }
+);
   }
 
   function loadDataset(rows, source) {
-    state.records = validateAndProcess(rows);
-    state.filtered = [...state.records];
-    state.source = source;
-state.activeSavedDatasetId = null;
-state.selectedId =
-      latest(state.records)?.id || null;
+  const warnings = [];
+
+  state.records =
+    validateAndProcess(
+      rows,
+      warnings
+    );
+
+  state.validationWarnings =
+    warnings;
+
+  state.filtered = [...state.records];
+  state.source = source;
+  state.activeSavedDatasetId = null;
+  state.selectedId =
+    latest(state.records)?.id || null;
     state.search = "";
     state.sortKey = "auction_date";
     state.sortDirection = "desc";
@@ -733,12 +788,17 @@ state.selectedId =
     renderAll();
 
     toast(
-      `${state.records.length} records loaded from ${source}.`,
-      "success"
-    );
+  `${state.records.length} records loaded from ${source}.`,
+  "success"
+);
+
+announceValidationWarnings();
   }
 
-  function validateAndProcess(rows) {
+  function validateAndProcess(
+  rows,
+  warnings = []
+) {
     if (!Array.isArray(rows) || !rows.length) {
       throw new Error(
         "No auction records were provided."
@@ -754,10 +814,11 @@ state.selectedId =
         row.__row || index + 1;
 
       const record = normalizeRow(
-        row,
-        rowNumber,
-        errors
-      );
+  row,
+  rowNumber,
+  errors,
+  warnings
+);
 
       if (!record) {
         return;
@@ -895,10 +956,11 @@ state.selectedId =
   }
 
   function normalizeRow(
-    row,
-    rowNumber,
-    errors
-  ) {
+  row,
+  rowNumber,
+  errors,
+  warnings
+) {
     const record = {
       auction_date:
         normalizeDate(
@@ -931,10 +993,11 @@ state.selectedId =
     };
 
     const rowErrors = [];
+const rowWarnings = [];
 
     if (!record.auction_date) {
       rowErrors.push(
-        `Row ${rowNumber}: invalid auction_date.`
+        `Row ${rowNumber}: auction_date must be a real date in YYYY-MM-DD format.`
       );
     }
 
@@ -1020,48 +1083,72 @@ state.selectedId =
       );
     }
 
-    errors.push(...rowErrors);
+    if (
+  Number.isFinite(
+    record.amount_awarded
+  ) &&
+  Number.isFinite(
+    record.amount_offered
+  ) &&
+  record.amount_awarded >
+    record.amount_offered &&
+  record.amount_awarded <=
+    record.tenders_received
+) {
+  rowWarnings.push(
+    "Award exceeds offer"
+  );
 
-    return rowErrors.length
-      ? null
-      : record;
+  warnings.push(
+    `Row ${rowNumber}: amount_awarded exceeds amount_offered; review this observation.`
+  );
+}
+
+record.warning_flags =
+  rowWarnings.join("; ");
+
+errors.push(...rowErrors);
+
+return rowErrors.length
+  ? null
+  : record;
   }
 
   function normalizeDate(value) {
-    const text = String(value || "")
-      .trim();
+  const text = String(value || "")
+    .trim();
 
-    if (
-      /^\d{4}-\d{2}-\d{2}$/.test(
-        text
-      ) &&
-      !Number.isNaN(
-        new Date(
-          `${text}T00:00:00Z`
-        ).getTime()
-      )
-    ) {
-      return text;
-    }
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})$/
+      .exec(text);
 
-    const date = new Date(text);
-
-    if (
-      Number.isNaN(date.getTime())
-    ) {
-      return null;
-    }
-
-    return [
-      date.getUTCFullYear(),
-      String(
-        date.getUTCMonth() + 1
-      ).padStart(2, "0"),
-      String(
-        date.getUTCDate()
-      ).padStart(2, "0"),
-    ].join("-");
+  if (!match) {
+    return null;
   }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const date =
+    new Date(
+      Date.UTC(
+        year,
+        month - 1,
+        day
+      )
+    );
+
+  const isExactDate =
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() ===
+      month - 1 &&
+    date.getUTCDate() === day;
+
+  return isExactDate
+    ? text
+    : null;
+}
 
   function normalizeInstrument(value) {
     const text = String(value || "")
@@ -1463,15 +1550,24 @@ renderAll();
     const currentLatest =
       latest(state.filtered);
 
-    ui.datasetStatus.textContent =
-      state.records.length
-        ? "DATA READY"
-        : "NO DATA LOADED";
+    const warningCount =
+  state.validationWarnings.length;
 
-    ui.datasetStatus.className =
-      state.records.length
-        ? "status-chip status-chip--ready"
-        : "status-chip status-chip--idle";
+ui.datasetStatus.textContent =
+  !state.records.length
+    ? "NO DATA LOADED"
+    : warningCount
+      ? `${warningCount} DATA WARNING${
+          warningCount === 1 ? "" : "S"
+        }`
+      : "DATA READY";
+
+ui.datasetStatus.className =
+  !state.records.length
+    ? "status-chip status-chip--idle"
+    : warningCount
+      ? "status-chip status-chip--warning"
+      : "status-chip status-chip--ready";
 
     ui.recordCount.textContent =
       String(state.filtered.length);
@@ -2029,6 +2125,19 @@ renderAll();
       });
     }
 
+if (record.warning_flags) {
+  signals.unshift({
+    title:
+      "Observation requires review",
+
+    message:
+      record.warning_flags,
+
+    className:
+      "is-warning",
+  });
+}
+    
     ui.signalFeed.replaceChildren();
 
     signals.forEach(
@@ -4170,6 +4279,7 @@ function debounce(
     state.selectedId = null;
     state.source = "";
 state.activeSavedDatasetId = null;
+state.validationWarnings = [];
 state.search = "";
     state.tapeIndex = 0;
     state.chartMetric =
@@ -4745,14 +4855,20 @@ function loadSavedDataset(
       );
     }
 
-    state.records =
-      validateAndProcess(
-        dataset.records
-      );
+    const warnings = [];
 
-    state.filtered = [
-      ...state.records,
-    ];
+state.records =
+  validateAndProcess(
+    dataset.records,
+    warnings
+  );
+
+state.validationWarnings =
+  warnings;
+
+state.filtered = [
+  ...state.records,
+];
 
     state.source =
       dataset.source ||
@@ -4783,9 +4899,11 @@ function loadSavedDataset(
     renderAll();
 
     toast(
-      `"${dataset.name}" loaded.`,
-      "success"
-    );
+  `"${dataset.name}" loaded.`,
+  "success"
+);
+
+announceValidationWarnings();
   } catch (error) {
     toast(
       error.message ||
@@ -5327,6 +5445,36 @@ function storageErrorMessage(
   }
 
   return "Browser storage is unavailable or the saved data is invalid.";
+}
+
+function announceValidationWarnings() {
+  const count =
+    state.validationWarnings.length;
+
+  if (!count) {
+    return;
+  }
+
+  const preview =
+    state.validationWarnings
+      .slice(0, 2)
+      .join(" ");
+
+  const remaining =
+    count - 2;
+
+  toast(
+    `${count} data warning${
+      count === 1 ? "" : "s"
+    }: ${preview}${
+      remaining > 0
+        ? ` ${remaining} more warning${
+            remaining === 1 ? "" : "s"
+          }.`
+        : ""
+    }`,
+    "warning"
+  );
 }
   
   function confirmAction(
