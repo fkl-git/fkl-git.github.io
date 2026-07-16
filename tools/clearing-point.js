@@ -2669,84 +2669,40 @@ function renderChart(
     model.series
   );
 
-  const reduceMotion =
+const reduceMotion =
   window.matchMedia(
     "(prefers-reduced-motion: reduce)"
   ).matches;
 
 /*
-  Draw a first frame immediately so the chart never
-  appears to wait before rendering.
+  Draw the completed chart only once.
+  CSS handles the visual entrance.
 */
 drawChart(
   model,
-  animate && !reduceMotion
-    ? 0.08
-    : 1,
+  1,
   null
 );
 
-/*
-  Remove the entry state on the next browser frame.
-  The canvas then fades and rises into position.
-*/
-requestAnimationFrame(() => {
+if (reduceMotion || !animate) {
   ui.chartStage.classList.remove(
     "is-rendering"
   );
-});
 
-if (
-  !animate ||
-  reduceMotion
-) {
   return;
 }
 
-const started =
-  performance.now();
-
 /*
-  Previously 720 ms. A 420 ms reveal feels animated
-  without making the chart appear slow.
+  Allow the hidden starting state to paint,
+  then reveal the completed chart.
 */
-const duration = 420;
-
-const frame = (time) => {
-  const elapsed =
-    time - started;
-
-  const progress =
-    Math.min(
-      1,
-      elapsed / duration
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    ui.chartStage.classList.remove(
+      "is-rendering"
     );
-
-  drawChart(
-    model,
-    easeOutCubic(progress),
-    null
-  );
-
-  if (progress < 1) {
-    state.chartAnimationFrame =
-      requestAnimationFrame(
-        frame
-      );
-  } else {
-    state.chartAnimationFrame =
-      null;
-
-    drawChart(
-      model,
-      1,
-      null
-    );
-  }
-};
-
-state.chartAnimationFrame =
-  requestAnimationFrame(frame);
+  });
+});
 }
 
 function prepareChartCanvas() {
