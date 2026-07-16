@@ -73,6 +73,9 @@ chartPoints: [],
 chartHoverPoint: null,
 chartAnimationFrame: null,
 
+dialogOpeners: new WeakMap(),
+dataDockReturnFocus: null,
+
 confirmationAction: null,
   };
 
@@ -85,6 +88,7 @@ confirmationAction: null,
     dataDock: $("dataDock"),
     toggleDataDockButton: $("toggleDataDockButton"),
     closeDataDockButton: $("closeDataDockButton"),
+    dataDockBackdrop: $("dataDockBackdrop"),
 
     csvFileInput: $("csvFileInput"),
     uploadCsvButton: $("uploadCsvButton"),
@@ -185,6 +189,8 @@ chartStage: $("chartStage"),
 chartTooltip: $("chartTooltip"),
 chartLegend: $("chartLegend"),
 chartEmptyState: $("chartEmptyState"),
+    chartAccessibilitySummary:
+  $("chartAccessibilitySummary"),
 
     pasteCsvDialog: $("pasteCsvDialog"),
     pastedCsvInput: $("pastedCsvInput"),
@@ -223,6 +229,7 @@ tableSortButtons: [
 
   bindEvents();
   resetDashboard(false);
+  syncResponsiveState();
 
   function bindEvents() {
     ui.uploadCsvButton.addEventListener("click", () => {
@@ -315,9 +322,14 @@ tableSortButtons: [
     });
 
     ui.auctionTableBody.addEventListener(
-      "click",
-      selectTableRow
-    );
+  "click",
+  selectTableRow
+);
+
+ui.auctionTableBody.addEventListener(
+  "keydown",
+  handleTableRowKeyboard
+);
 
     ui.auctionTapePreviousButton.addEventListener(
       "click",
@@ -371,11 +383,18 @@ tableSortButtons: [
     );
 
     ui.closeDataDockButton.addEventListener(
-      "click",
-      () => {
-        setDataDockOpen(false);
-      }
-    );
+  "click",
+  () => {
+    setDataDockOpen(false);
+  }
+);
+
+ui.dataDockBackdrop.addEventListener(
+  "click",
+  () => {
+    setDataDockOpen(false);
+  }
+);
 
     ui.openDatasetManagerButton.addEventListener(
   "click",
@@ -489,7 +508,13 @@ window.addEventListener(
   "resize",
   debounce(() => {
     renderChart(false);
+    syncResponsiveState();
   }, 140)
+);
+
+document.addEventListener(
+  "keydown",
+  handleGlobalKeydown
 );
 
     [
@@ -499,12 +524,19 @@ window.addEventListener(
   ui.datasetManagerDialog,
   ui.confirmationDialog,
 ].forEach((dialog) => {
-      dialog.addEventListener("click", (event) => {
-        if (event.target === dialog) {
-          dialog.close();
-        }
-      });
-    });
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) {
+      dialog.close();
+    }
+  });
+
+  dialog.addEventListener(
+    "close",
+    () => {
+      restoreDialogFocus(dialog);
+    }
+  );
+});
   }
 
   async function uploadCsv() {
@@ -1726,16 +1758,42 @@ ui.datasetStatus.className =
         );
 
       const item =
-        fragment.querySelector(
-          ".auction-tape-item"
-        );
+  fragment.querySelector(
+    ".auction-tape-item"
+  );
 
-      item.addEventListener(
-        "click",
-        () => {
-          selectRecord(record.id);
-        }
-      );
+item.tabIndex = 0;
+
+item.setAttribute(
+  "role",
+  "button"
+);
+
+item.setAttribute(
+  "aria-label",
+  chartRecordAccessibilityLabel(
+    record
+  )
+);
+
+item.addEventListener(
+  "click",
+  () => {
+    selectRecord(record.id);
+  }
+);
+
+item.addEventListener(
+  "keydown",
+  (event) => {
+    activateOnKeyboard(
+      event,
+      () => {
+        selectRecord(record.id);
+      }
+    );
+  }
+);
 
       ui.auctionTapeTrack
         .appendChild(fragment);
@@ -2369,11 +2427,18 @@ if (record.warning_flags) {
 
       card.tabIndex = 0;
       card.setAttribute(
-        "role",
-        "button"
-      );
+  "role",
+  "button"
+);
 
-      card.addEventListener(
+card.setAttribute(
+  "aria-label",
+  chartRecordAccessibilityLabel(
+    record
+  )
+);
+
+card.addEventListener(
         "click",
         () => {
           selectRecord(record.id);
@@ -2542,11 +2607,27 @@ ui.downloadVisibleTableButton
       document.createElement("tr");
 
     row.dataset.recordId =
-      record.id;
-    if (
+  record.id;
+
+row.tabIndex = 0;
+
+row.setAttribute(
+  "aria-label",
+  chartRecordAccessibilityLabel(
+    record
+  )
+);
+
+const isSelected =
   record.id ===
-  state.selectedId
-) {
+  state.selectedId;
+
+row.setAttribute(
+  "aria-selected",
+  String(isSelected)
+);
+
+if (isSelected) {
   row.classList.add(
     "is-selected"
   );
@@ -2793,10 +2874,14 @@ function renderChart(
     );
 
   state.chartModel = model;
-  state.chartPoints =
-    model?.points || [];
+state.chartPoints =
+  model?.points || [];
 
-  if (!model) {
+updateChartAccessibility(
+  model
+);
+
+if (!model) {
   prepared.ctx.clearRect(
     0,
     0,
@@ -4125,6 +4210,88 @@ function selectChartPoint() {
   }
 }
 
+function updateChartAccessibility(
+  model
+) {
+  if (!model) {
+    ui.marketChart.setAttribute(
+      "aria-label",
+      "Auction series chart with no available data"
+    );
+
+    ui.chartAccessibilitySummary
+      .textContent =
+      state.filtered.length
+        ? "No comparable chart observations are available for the current selection."
+        : "No auction data has been loaded.";
+
+    return;
+  }
+
+  const metric =
+    model.config.label;
+
+  const seriesCount =
+    model.series.length;
+
+  const pointCount =
+    model.points.length;
+
+  ui.marketChart.setAttribute(
+    "aria-label",
+    `${metric} auction series chart`
+  );
+
+  ui.chartAccessibilitySummary
+    .textContent =
+    `${metric} chart containing ${pointCount} observation${
+      pointCount === 1 ? "" : "s"
+    } across ${seriesCount} tenor series. ` +
+    "Use the metric buttons and tenor selector to change the chart. " +
+    "Individual auctions remain selectable from the Observation menu, Tenor Matrix, and Auction Table.";
+}
+
+function chartRecordAccessibilityLabel(
+  record
+) {
+  return [
+    formatDate(
+      record.auction_date
+    ),
+
+    record.instrument_type,
+
+    record.tenor,
+
+    `accepted yield ${formatYield(
+      record.accepted_yield
+    )}`,
+
+    `bid-to-cover ${record.bid_to_cover.toFixed(
+      2
+    )} times`,
+
+    formatAward(
+      record.award_status
+    ),
+  ].join(", ");
+}
+
+function activateOnKeyboard(
+  event,
+  action
+) {
+  if (
+    event.key !== "Enter" &&
+    event.key !== " "
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+  action();
+}
+  
 function sampledValues(
   values,
   desiredCount
@@ -4417,6 +4584,73 @@ ui.downloadVisibleTableButton
     }
   }
 
+function handleTableRowKeyboard(
+  event
+) {
+  const row = event.target.closest(
+    "tr[data-record-id]"
+  );
+
+  if (!row) {
+    return;
+  }
+
+  if (
+    event.key === "Enter" ||
+    event.key === " "
+  ) {
+    event.preventDefault();
+
+    selectRecord(
+      row.dataset.recordId
+    );
+
+    return;
+  }
+
+  const rows = [
+    ...ui.auctionTableBody
+      .querySelectorAll(
+        "tr[data-record-id]"
+      ),
+  ];
+
+  const index =
+    rows.indexOf(row);
+
+  let nextIndex = null;
+
+  if (event.key === "ArrowDown") {
+    nextIndex = Math.min(
+      rows.length - 1,
+      index + 1
+    );
+  } else if (
+    event.key === "ArrowUp"
+  ) {
+    nextIndex = Math.max(
+      0,
+      index - 1
+    );
+  } else if (
+    event.key === "Home"
+  ) {
+    nextIndex = 0;
+  } else if (
+    event.key === "End"
+  ) {
+    nextIndex =
+      rows.length - 1;
+  }
+
+  if (nextIndex === null) {
+    return;
+  }
+
+  event.preventDefault();
+  rows[nextIndex]?.focus();
+}
+  
   function selectRecord(id) {
   const exists =
     state.filtered.some(
@@ -5517,51 +5751,237 @@ function announceValidationWarnings() {
   }
 
   function toggleDataDock() {
-    if (
-      matchMedia(
-        "(max-width: 860px)"
-      ).matches
-    ) {
-      setDataDockOpen(
-        !ui.dataDock.classList
-          .contains("is-open")
-      );
+  if (
+    matchMedia(
+      "(max-width: 860px)"
+    ).matches
+  ) {
+    setDataDockOpen(
+      !ui.dataDock.classList
+        .contains("is-open")
+    );
 
-      return;
-    }
-
-    ui.dataDock.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    return;
   }
 
-  function setDataDockOpen(open) {
-    ui.dataDock.classList.toggle(
-      "is-open",
-      open
+  ui.dataDock.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+function setDataDockOpen(
+  open,
+  restoreFocus = true
+) {
+  const isMobile =
+    matchMedia(
+      "(max-width: 860px)"
+    ).matches;
+
+  if (!isMobile) {
+    ui.dataDock.classList.remove(
+      "is-open"
+    );
+
+    ui.dataDock.inert = false;
+
+    ui.dataDock.removeAttribute(
+      "aria-hidden"
+    );
+
+    ui.dataDockBackdrop.hidden =
+      true;
+
+    document.body.classList.remove(
+      "is-data-dock-open"
     );
 
     ui.toggleDataDockButton
       .setAttribute(
         "aria-expanded",
-        String(open)
+        "true"
       );
+
+    return;
   }
 
-  function openDialog(dialog) {
-    if (
-      typeof dialog.showModal ===
-      "function"
-    ) {
-      dialog.showModal();
-    } else {
-      dialog.setAttribute(
-        "open",
-        ""
-      );
-    }
+  if (open) {
+    state.dataDockReturnFocus =
+      document.activeElement instanceof
+      HTMLElement
+        ? document.activeElement
+        : ui.toggleDataDockButton;
   }
+
+  ui.dataDock.classList.toggle(
+    "is-open",
+    open
+  );
+
+  ui.dataDock.inert = !open;
+
+  ui.dataDock.setAttribute(
+    "aria-hidden",
+    String(!open)
+  );
+
+  ui.dataDockBackdrop.hidden =
+    !open;
+
+  document.body.classList.toggle(
+    "is-data-dock-open",
+    open
+  );
+
+  ui.toggleDataDockButton
+    .setAttribute(
+      "aria-expanded",
+      String(open)
+    );
+
+  if (open) {
+    requestAnimationFrame(() => {
+      ui.closeDataDockButton.focus();
+    });
+
+    return;
+  }
+
+  if (
+    restoreFocus &&
+    state.dataDockReturnFocus?.isConnected
+  ) {
+    requestAnimationFrame(() => {
+      state.dataDockReturnFocus.focus();
+    });
+  }
+
+  state.dataDockReturnFocus =
+    null;
+}
+
+function syncResponsiveState() {
+  const isMobile =
+    matchMedia(
+      "(max-width: 860px)"
+    ).matches;
+
+  if (!isMobile) {
+    setDataDockOpen(
+      false,
+      false
+    );
+
+    return;
+  }
+
+  const isOpen =
+    ui.dataDock.classList
+      .contains("is-open");
+
+  ui.dataDock.inert = !isOpen;
+
+  ui.dataDock.setAttribute(
+    "aria-hidden",
+    String(!isOpen)
+  );
+
+  ui.dataDockBackdrop.hidden =
+    !isOpen;
+
+  document.body.classList.toggle(
+    "is-data-dock-open",
+    isOpen
+  );
+
+  ui.toggleDataDockButton
+    .setAttribute(
+      "aria-expanded",
+      String(isOpen)
+    );
+}
+
+function handleGlobalKeydown(
+  event
+) {
+  if (
+    event.key !== "Escape" ||
+    document.querySelector(
+      "dialog[open]"
+    ) ||
+    !ui.dataDock.classList
+      .contains("is-open")
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+  setDataDockOpen(false);
+}
+
+function openDialog(
+  dialog,
+  preferredFocus = null
+) {
+  const opener =
+    document.activeElement instanceof
+    HTMLElement
+      ? document.activeElement
+      : null;
+
+  state.dialogOpeners.set(
+    dialog,
+    opener
+  );
+
+  if (
+    typeof dialog.showModal ===
+    "function"
+  ) {
+    dialog.showModal();
+  } else {
+    dialog.setAttribute(
+      "open",
+      ""
+    );
+  }
+
+  requestAnimationFrame(() => {
+    const target =
+      preferredFocus ||
+      dialog.querySelector(
+        "[autofocus], input:not([disabled]), textarea:not([disabled]), select:not([disabled])"
+      ) ||
+      dialog.querySelector(
+        "button:not([disabled])"
+      );
+
+    target?.focus();
+  });
+}
+
+function restoreDialogFocus(
+  dialog
+) {
+  const opener =
+    state.dialogOpeners.get(
+      dialog
+    );
+
+  state.dialogOpeners.delete(
+    dialog
+  );
+
+  if (
+    opener?.isConnected &&
+    !opener.disabled
+  ) {
+    requestAnimationFrame(() => {
+      opener.focus();
+    });
+  }
+}
 
   function validation(
     element,
