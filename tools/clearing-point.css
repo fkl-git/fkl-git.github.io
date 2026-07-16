@@ -1205,6 +1205,25 @@ select {
     100% 100%;
 }
 
+/*
+  The Data Dock is intentionally narrow on desktop.
+  Native macOS date controls cannot fit safely in
+  two columns, so dock field grids stack vertically.
+*/
+.data-dock .field-grid--two {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.data-dock .field-grid--two > * {
+  min-width: 0;
+}
+
+.data-dock input[type="date"] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
 
 /* =========================================================
    MARKET OVERVIEW
