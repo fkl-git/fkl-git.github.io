@@ -31,6 +31,9 @@ const PROCESSED_COLUMNS = [
   "warning_flags",
 ];
 
+  const TABLE_RENDER_CHUNK =
+  120;
+
   const SAMPLE_CSV = `auction_date,instrument_type,tenor,tenor_days,amount_offered,tenders_received,amount_awarded,accepted_yield
 2026-05-04,T-Bill,91-day,91,7000,14780,7000,5.611
 2026-05-04,T-Bill,182-day,182,7000,12110,6800,5.748
@@ -65,6 +68,7 @@ search: "",
     sortKey: "auction_date",
     sortDirection: "desc",
     tapeIndex: 0,
+    tableRenderToken: 0,
 
 chartMetric: "accepted_yield",
 chartTenor: "all",
@@ -307,13 +311,25 @@ tableSortButtons: [
   }
 );
 
-    ui.auctionTableSearch.addEventListener("input", () => {
-      state.search = ui.auctionTableSearch.value
+    const renderSearchResults =
+  debounce(
+    () => {
+      renderTable();
+    },
+    120
+  );
+
+ui.auctionTableSearch.addEventListener(
+  "input",
+  () => {
+    state.search =
+      ui.auctionTableSearch.value
         .trim()
         .toLowerCase();
 
-      renderTable();
-    });
+    renderSearchResults();
+  }
+);
 
     ui.tableSortButtons.forEach((button) => {
       button.addEventListener("click", () => {
@@ -2470,72 +2486,206 @@ card.addEventListener(
       }`;
   }
 
-  function renderTable() {
-    const records =
-      visibleTableRecords();
+  function renderTable(
+  { immediate = false } = {}
+) {
+  const records =
+    visibleTableRecords();
+
+  const renderToken =
+    ++state.tableRenderToken;
+
+  ui.auctionTableBody
+    .replaceChildren();
+
+  ui.downloadVisibleTableButton
+    .disabled =
+    records.length === 0;
+
+  syncTableSortState();
+
+  if (!records.length) {
+    const row =
+      document.createElement("tr");
+
+    row.className =
+      "table-empty-row";
+
+    const cell =
+      document.createElement("td");
+
+    cell.colSpan = 13;
+
+    cell.textContent =
+      state.records.length
+        ? "No records match the current view."
+        : "No auction records loaded.";
+
+    row.appendChild(cell);
 
     ui.auctionTableBody
-      .replaceChildren();
+      .appendChild(row);
 
-    if (!records.length) {
-      const row =
-        document.createElement("tr");
+    completeTableRender(
+      records
+    );
 
-      row.className =
-        "table-empty-row";
+    return;
+  }
 
-      const cell =
-        document.createElement("td");
+  ui.auctionTableBody
+    .setAttribute(
+      "aria-busy",
+      "true"
+    );
 
-      cell.colSpan = 13;
+  const shouldRenderInChunks =
+    !immediate &&
+    records.length >
+      TABLE_RENDER_CHUNK;
 
-      cell.textContent =
-        state.records.length
-          ? "No records match the current view."
-          : "No auction records loaded.";
+  if (!shouldRenderInChunks) {
+    ui.auctionTableBody
+      .appendChild(
+        createTableRowsFragment(
+          records
+        )
+      );
 
-      row.appendChild(cell);
+    completeTableRender(
+      records
+    );
 
-      ui.auctionTableBody
-        .appendChild(row);
-    } else {
-      records.forEach((record) => {
-        ui.auctionTableBody
-          .appendChild(
-            tableRow(record)
-          );
-      });
+    return;
+  }
+
+  let currentIndex = 0;
+
+  const renderNextChunk = () => {
+    /*
+      A newer search, filter, or sort operation
+      invalidates the previous rendering job.
+    */
+    if (
+      renderToken !==
+      state.tableRenderToken
+    ) {
+      return;
     }
 
-ui.downloadVisibleTableButton
-  .disabled =
-  records.length === 0;
-    
+    const nextRecords =
+      records.slice(
+        currentIndex,
+        currentIndex +
+          TABLE_RENDER_CHUNK
+      );
+
+    ui.auctionTableBody
+      .appendChild(
+        createTableRowsFragment(
+          nextRecords
+        )
+      );
+
+    currentIndex +=
+      nextRecords.length;
+
     ui.visibleRecordCount
       .textContent =
-      `${records.length} record${
-        records.length === 1
-          ? ""
-          : "s"
-      } displayed`;
+      `Rendering ${currentIndex.toLocaleString(
+        "en-PH"
+      )} of ${records.length.toLocaleString(
+        "en-PH"
+      )} records`;
 
-    ui.tableSortSummary
-      .textContent =
-      `Sorted by ${state.sortKey.replace(
-        /_/g,
-        " "
-      )} (${state.sortDirection})`;
+    updateTableSelection();
 
-    ui.tableSortButtons.forEach(
-      (button) => {
-        button.classList.toggle(
-          "is-active",
-          button.dataset.sortKey ===
-            state.sortKey
-        );
-      }
+    if (
+      currentIndex <
+      records.length
+    ) {
+      requestAnimationFrame(
+        renderNextChunk
+      );
+
+      return;
+    }
+
+    completeTableRender(
+      records
     );
-  }
+  };
+
+  /*
+    Render the first group immediately.
+    Later groups yield to the browser.
+  */
+  renderNextChunk();
+}
+
+function createTableRowsFragment(
+  records
+) {
+  const fragment =
+    document.createDocumentFragment();
+
+  records.forEach((record) => {
+    fragment.appendChild(
+      tableRow(record)
+    );
+  });
+
+  return fragment;
+}
+
+function completeTableRender(
+  records
+) {
+  ui.auctionTableBody
+    .setAttribute(
+      "aria-busy",
+      "false"
+    );
+
+  ui.visibleRecordCount
+    .textContent =
+    `${records.length.toLocaleString(
+      "en-PH"
+    )} record${
+      records.length === 1
+        ? ""
+        : "s"
+    } displayed`;
+
+  ui.tableSortSummary
+    .textContent =
+    `Sorted by ${state.sortKey.replace(
+      /_/g,
+      " "
+    )} (${state.sortDirection})`;
+
+  updateTableSelection();
+}
+
+function syncTableSortState() {
+  ui.tableSortButtons.forEach(
+    (button) => {
+      const active =
+        button.dataset.sortKey ===
+        state.sortKey;
+
+      button.classList.toggle(
+        "is-active",
+        active
+      );
+
+      button.setAttribute(
+        "aria-pressed",
+        String(active)
+      );
+    }
+  );
+}
 
   function visibleTableRecords() {
     const records =
@@ -4650,6 +4800,30 @@ function handleTableRowKeyboard(
   event.preventDefault();
   rows[nextIndex]?.focus();
 }
+
+function updateTableSelection() {
+  const rows =
+    ui.auctionTableBody
+      .querySelectorAll(
+        "tr[data-record-id]"
+      );
+
+  rows.forEach((row) => {
+    const isSelected =
+      row.dataset.recordId ===
+      state.selectedId;
+
+    row.classList.toggle(
+      "is-selected",
+      isSelected
+    );
+
+    row.setAttribute(
+      "aria-selected",
+      String(isSelected)
+    );
+  });
+}
   
   function selectRecord(id) {
   const exists =
@@ -4668,7 +4842,7 @@ function handleTableRowKeyboard(
     .value = id;
 
   renderSelected();
-  renderTable();
+updateTableSelection();
 
   if (state.chartModel) {
     drawChart(
