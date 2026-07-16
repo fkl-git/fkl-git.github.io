@@ -2720,6 +2720,13 @@ tbody tr:hover {
   }
 }
 
+/* =========================================================
+   PRINT REPORT — SCREEN STATE
+========================================================= */
+
+.print-report-header {
+  display: none;
+}
 
 /* =========================================================
    RESPONSIVE — LARGE LAPTOP
@@ -3303,5 +3310,441 @@ tbody tr:hover {
   .chart-stage {
     border: 1px solid #dddddd;
     background: #ffffff;
+  }
+}
+
+/* =========================================================
+   PRINT REPORT
+========================================================= */
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+
+  :root {
+    color-scheme: light;
+
+    --bg-0: #ffffff;
+    --bg-1: #ffffff;
+    --bg-2: #ffffff;
+    --bg-3: #f8fafc;
+    --bg-4: #eef2f7;
+
+    --panel: #ffffff;
+    --panel-strong: #ffffff;
+    --panel-soft: #f8fafc;
+
+    --line: rgba(15, 23, 42, 0.16);
+    --line-strong: rgba(15, 23, 42, 0.28);
+
+    --text: #0f172a;
+    --text-soft: #334155;
+    --text-muted: #475569;
+    --text-faint: #64748b;
+
+    --shadow-panel: none;
+    --shadow-cyan: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  html,
+  body {
+    min-width: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  body {
+    overflow: visible !important;
+    font-size: 10pt;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  body::before,
+  body::after,
+  .cp-app::before {
+    display: none !important;
+  }
+
+  .command-header,
+  .auction-tape,
+  .data-dock,
+  .data-dock-backdrop,
+  .skip-link,
+  .toast-region,
+  .tool-footer,
+  dialog {
+    display: none !important;
+  }
+
+  .print-report-header {
+    display: block;
+    margin: 0 0 8mm;
+    padding: 0 0 5mm;
+    border-bottom:
+      2px solid #0f172a;
+  }
+
+  .print-report-header__top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12mm;
+  }
+
+  .print-report-header__eyebrow {
+    margin: 0 0 2mm;
+    color: #00778b;
+    font-family: var(--font-mono);
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+  }
+
+  .print-report-header h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 20pt;
+    letter-spacing: -0.025em;
+  }
+
+  .print-report-header__type {
+    margin: 0 0 1mm;
+    color: #64748b;
+    font-family: var(--font-mono);
+    font-size: 7.5pt;
+    text-align: right;
+  }
+
+  .print-report-header__grid {
+    display: grid;
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+    gap: 3mm 7mm;
+    margin-top: 6mm;
+  }
+
+  .print-report-header__grid > div {
+    min-width: 0;
+    padding-top: 2mm;
+    border-top:
+      1px solid #cbd5e1;
+  }
+
+  .print-report-header__grid span {
+    display: block;
+    margin-bottom: 1mm;
+    color: #64748b;
+    font-family: var(--font-mono);
+    font-size: 6.5pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .print-report-header__grid strong {
+    display: block;
+    color: #0f172a;
+    font-size: 8.5pt;
+    overflow-wrap: anywhere;
+  }
+
+  .print-report-header__disclaimer {
+    margin: 5mm 0 0;
+    color: #64748b;
+    font-size: 7pt;
+    line-height: 1.45;
+  }
+
+  .dashboard {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .market-workspace,
+  .intelligence-rail {
+    display: block;
+  }
+
+  .intelligence-rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .terminal-panel,
+  .market-overview {
+    margin: 0 0 6mm;
+    overflow: visible;
+    border:
+      1px solid #cbd5e1;
+    border-radius: 0;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .terminal-panel::before,
+  .terminal-panel::after,
+  .market-overview::before {
+    display: none !important;
+  }
+
+  .panel-heading {
+    min-height: 0;
+    padding: 4mm;
+    border-bottom:
+      1px solid #cbd5e1;
+    background: #ffffff !important;
+  }
+
+  .panel-kicker {
+    color: #00778b;
+  }
+
+  .panel-selector,
+  .chart-view-controls,
+  .chart-toolbar
+    .field-group,
+  .table-actions {
+    display: none !important;
+  }
+
+  .market-overview {
+    grid-template-columns:
+      minmax(0, 1.4fr)
+      minmax(0, 1fr);
+    padding: 5mm;
+  }
+
+  .market-overview__copy h1 {
+    font-size: 16pt;
+  }
+
+  .market-overview__snapshot {
+    gap: 2mm;
+  }
+
+  .snapshot-metric,
+  .flow-stage,
+  .clearing-signal__classification,
+  .tenor-card {
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .auction-flow {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+    gap: 3mm;
+    padding: 4mm;
+  }
+
+  .flow-connector {
+    display: none;
+  }
+
+  .flow-stage {
+    min-height: auto;
+    padding: 4mm;
+  }
+
+  .auction-flow__metrics {
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+  }
+
+  .chart-toolbar {
+    min-height: 0;
+    justify-content: flex-end;
+    padding: 2mm 4mm;
+    background: #ffffff !important;
+  }
+
+  .chart-stage {
+    min-height: 88mm;
+    contain: none;
+    background:
+      linear-gradient(
+        rgba(99, 232, 255, 0.04)
+          1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        rgba(99, 232, 255, 0.04)
+          1px,
+        transparent 1px
+      ),
+      #071017 !important;
+    background-size:
+      42px 42px;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  #marketChart {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .chart-tooltip {
+    display: none !important;
+  }
+
+  .signal-feed__item,
+  .signal-feed__empty {
+    break-inside: avoid;
+  }
+
+  .intelligence-rail {
+    display: grid;
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+    gap: 5mm;
+    margin-bottom: 6mm;
+  }
+
+  .intelligence-rail
+    .terminal-panel {
+    margin: 0;
+  }
+
+  .tenor-matrix-panel,
+  .auction-table-panel,
+  .methodology-panel {
+    content-visibility: visible !important;
+    contain: none !important;
+  }
+
+  .tenor-matrix {
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+    gap: 3mm;
+    padding: 4mm;
+  }
+
+  .tenor-card {
+    min-height: auto;
+    padding: 3mm;
+    break-inside: avoid;
+  }
+
+  .auction-table-panel {
+    break-before: page;
+    break-inside: auto;
+  }
+
+  .table-status {
+    padding: 2mm 3mm;
+  }
+
+  .table-scroll {
+    width: 100%;
+    overflow: visible;
+  }
+
+  table {
+    width: 100%;
+    min-width: 0 !important;
+    border-collapse: collapse;
+  }
+
+  thead {
+    position: static;
+    display:
+      table-header-group;
+    background:
+      #f1f5f9 !important;
+  }
+
+  th,
+  td {
+    padding: 1.5mm 1.7mm;
+    border-color: #cbd5e1;
+    font-size: 6.6pt;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  th {
+    color: #334155;
+  }
+
+  td {
+    color: #475569;
+  }
+
+  tbody tr {
+    break-inside: avoid;
+  }
+
+  .table-sort-button {
+    color: inherit;
+  }
+
+  .table-sort-button
+    .is-active::after,
+  .table-sort-button.is-active::after {
+    display: none;
+  }
+
+  tbody tr.is-selected {
+    background:
+      #ecfeff !important;
+  }
+
+  .methodology-panel {
+    break-before: page;
+    break-inside: auto;
+  }
+
+  .methodology-grid,
+  .threshold-grid {
+    grid-template-columns:
+      repeat(
+        4,
+        minmax(0, 1fr)
+      );
+  }
+
+  .methodology-details {
+    break-inside: avoid;
+  }
+
+  .methodology-details
+    summary::after {
+    display: none;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
   }
 }
